@@ -36,7 +36,7 @@ int main() {
         // This struct contains the data to be sent
         // The values are burst and priority
         // This data must be generated randomly or read from a file
-        Request  req = {rand(), rand() % 256};
+        Request  req = {rand() % 20, rand() % 256};
 
         serialize_request(&buffer, &req);
 
@@ -56,6 +56,7 @@ int main() {
         deserialize_response(&res_buf, &res);
         printf("Respuesta del servidor: pid=%u\n", res.pid);
     }
+    close(sock);
 
     return 0;
 }
