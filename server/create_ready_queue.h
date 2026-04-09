@@ -5,6 +5,7 @@
 #include "i_ready_queue.h"
 #include "scheduler_type.h"
 #include "./ready_queue/circular_queue.h"
+#include "./ready_queue/priority_queue.h"
 
 IReadyQueue* create_ready_queue(SchedulerType type) {
     IReadyQueue* ready_queue = malloc(sizeof(IReadyQueue));
@@ -19,13 +20,10 @@ IReadyQueue* create_ready_queue(SchedulerType type) {
         ready_queue->implementation = cq_create(512);
         ready_queue->operations.enqueue = cq_enqueue;
         ready_queue->operations.dequeue = cq_dequeue;
-    } else if (type == SJF || type == HPF) {
-        /*
-        ready_queue->implementation = heap_create(10, 0);
-        ready_queue->implementation.enqueue = heap_enqueue;
-        ready_queue->implementation.dequeue = heap_dequeue;
-        ready_queue->implementation.destroy = heap_destroy;
-        */
+    } else if (type == SJF) {
+        ready_queue->implementation = pq_create(512, 0);
+        ready_queue->operations.enqueue = pq_enqueue;
+        ready_queue->operations.dequeue = pq_dequeue;
     } else {
         /*
         ready_queue->implementation = heap_create(10, 1);

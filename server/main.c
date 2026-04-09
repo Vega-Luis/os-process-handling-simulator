@@ -11,10 +11,6 @@
 #include "create_ready_queue.h"
 #define PORT 8080
 
-
-
-
-
 void* job_scheduler(void *arg) {
     JobSchedulerArgs* job_scheduler_args= (JobSchedulerArgs*)arg;
     int server_fd = job_scheduler_args->server_fd;
