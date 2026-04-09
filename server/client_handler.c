@@ -5,9 +5,17 @@
 #include <arpa/inet.h>
 #include "protocol.h"
 #include "buffer.h"
+#include "pcb.h"
+#include "ready_queue/ready_queue.h"
+#include "client_args.h"
+#include "i_ready_queue.h"
 
 void* manage_client(void* arg) {
-    int sock = *(int*)arg;
+    uint32_t pid_counter = 1;
+
+    ClientArgs* client_args = (ClientArgs*)arg;
+    int sock = client_args->client;
+    IReadyQueue* ready_queue = client_args->ready_queue;
 
     while (1) {
         uint8_t buffer_data[REQUEST_SIZE];
@@ -23,11 +31,14 @@ void* manage_client(void* arg) {
         deserialize_request(&buffer, &req);
         printf("Recibido: burst=%u, priority=%u\n", req.burst, req.priority);
 
+        ProgramControlBlock pcb = {pid_counter, req.burst, req.priority};
+        ready_queue->operations.enqueue(ready_queue, pcb);
+
         uint8_t res_buffer[RESPONSE_SIZE];
 
         Buffer res_buf;
         buffer_init(&res_buf, res_buffer, RESPONSE_SIZE);
-        Response res = {rand()}; // PID de ejemplo
+        Response res = {pid_counter++};
         serialize_response(&res_buf, &res);
         send(sock, res_buffer, res_buf.offset, 0);
     }
