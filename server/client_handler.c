@@ -8,13 +8,14 @@
 #include "pcb.h"
 #include "ready_queue/ready_queue.h"
 #include "client_args.h"
+#include "i_ready_queue.h"
 
 void* manage_client(void* arg) {
     uint32_t pid_counter = 1;
 
     ClientArgs* client_args = (ClientArgs*)arg;
     int sock = client_args->client;
-    ReadyQueue* ready_queue = client_args->ready_queue;
+    IReadyQueue* ready_queue = client_args->ready_queue;
 
     while (1) {
         uint8_t buffer_data[REQUEST_SIZE];
@@ -31,7 +32,7 @@ void* manage_client(void* arg) {
         printf("Recibido: burst=%u, priority=%u\n", req.burst, req.priority);
 
         ProgramControlBlock pcb = {pid_counter, req.burst, req.priority};
-        enqueue(ready_queue, pcb);
+        ready_queue->operations.enqueue(ready_queue, pcb);
 
         uint8_t res_buffer[RESPONSE_SIZE];
 

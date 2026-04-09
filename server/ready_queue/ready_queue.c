@@ -3,46 +3,51 @@
 
 #include "ready_queue.h"
 
-void init_ready_queue(ReadyQueue* queue) {
-    queue->head = NULL;
-    queue->tail = NULL;
+void* init_ready_queue() {
+    ReadyQueue* rq = malloc(sizeof(ReadyQueue));
+    rq->head = NULL;
+    rq->tail = NULL;
+    return rq;
 }
 
-void enqueue(ReadyQueue* queue, ProgramControlBlock pcb) {
+void enqueue(IReadyQueue* queue, ProgramControlBlock pcb) {
+    ReadyQueue* rq = (ReadyQueue*)queue->implementation;
     ReadyQueueNode* new_node = malloc(sizeof(ReadyQueueNode));
 
     new_node->pcb = pcb;
     new_node->next = NULL;
 
-    if (queue->tail== NULL) {
-        queue->head= new_node;
-        queue->tail= new_node;
+    if (rq->tail== NULL) {
+        rq->head= new_node;
+        rq->tail= new_node;
         return;
     }
 
-    queue->tail->next = new_node;
-    queue->tail= new_node;
+    rq->tail->next = new_node;
+    rq->tail= new_node;
 }
 
-int dequeue(ReadyQueue* queue, ProgramControlBlock* pcb) {
+int dequeue(IReadyQueue* queue, ProgramControlBlock* pcb) {
+    ReadyQueue* rq = (ReadyQueue*)queue->implementation;
     if (is_empty(queue)) {
         return -1; // Queue is empty
     }
 
-    ReadyQueueNode* temp = queue->head;
+    ReadyQueueNode* temp = rq->head;
     *pcb = temp->pcb;
-    queue->head = queue->head->next;
+    rq->head = rq->head->next;
 
-    if (queue->head == NULL) {
-        queue->tail = NULL; // Queue is now empty
+    if (rq->head == NULL) {
+        rq->tail = NULL; // Queue is now empty
     }
 
     free(temp);
     return 0; // Success
 }
 
-int is_empty(ReadyQueue* queue) {
-    return queue->head == NULL;
+int is_empty(IReadyQueue* queue) {
+    ReadyQueue* rq = (ReadyQueue*)queue->implementation;
+    return rq->head == NULL;
 }
 
 void print_queue(ReadyQueue* queue) {

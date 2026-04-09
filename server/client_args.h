@@ -5,7 +5,7 @@
 
 typedef struct {
     int client;
-    ReadyQueue* ready_queue;
+    IReadyQueue* ready_queue;
 } ClientArgs;
 
 #endif // CLIENT_ARGS_H
