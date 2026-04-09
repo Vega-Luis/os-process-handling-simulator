@@ -42,10 +42,19 @@ void* fifo_cpu_scheduler(void* arg) {
 
     while (1) {
             ProgramControlBlock pcb;
-            ready_queue->operations.dequeue(ready_queue, &pcb);
-            printf("Ejecutando proceso PID: %u, Burst: %u, Priority: %u\n", pcb.pid, pcb.burst, pcb.priority);
-            sleep(pcb.burst); // Simula la ejecución del proceso
-            printf("Proceso PID: %u finalizado\n", pcb.pid);
+            int quantum;
+            ready_queue->operations.dequeue(ready_queue, &pcb, &quantum);
+            int time_slice = (quantum > 0 && quantum < (int) pcb.burst) ? quantum : pcb.burst;
+            printf("[RUN] PID: %u, Burst: %u, Priority: %u Time slice: %i\n", pcb.pid, pcb.burst, pcb.priority, time_slice);
+            sleep(time_slice); // Simula la ejecución del proceso
+            int new_burst = pcb.burst - (int)time_slice;
+            if (new_burst > 0) {
+                pcb.burst = (uint32_t)new_burst;
+                ready_queue->operations.enqueue(ready_queue, pcb);
+                printf("[REQUEUED] PID: %u, Burst: %u, Priority: %u\n", pcb.pid, pcb.burst, pcb.priority);
+            } else {
+                printf("[FINISHED] PID: %u\n", pcb.pid);
+            }
     }
     return NULL;
 }

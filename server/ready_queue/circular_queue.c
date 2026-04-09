@@ -1,6 +1,6 @@
 #include "circular_queue.h"
 
-CircularQueue* cq_create(int capacity) {
+CircularQueue* cq_create(int capacity, int quantum) {
     CircularQueue* rq = (CircularQueue*)malloc(sizeof(CircularQueue));
     size_t size = capacity * sizeof(ProgramControlBlock);
     rq->items = (ProgramControlBlock*)malloc(size);
@@ -8,6 +8,7 @@ CircularQueue* cq_create(int capacity) {
     rq->size = 0;
     rq->front = 0;
     rq->rear = 0;
+    rq->quantum = quantum;
     
     pthread_mutex_init(&rq->mutex, NULL);
     pthread_cond_init(&rq->cond, NULL);
@@ -46,7 +47,7 @@ void cq_enqueue(IReadyQueue* rq, ProgramControlBlock pcb) {
     pthread_mutex_unlock(&cq->mutex);
 }
 
-int cq_dequeue(IReadyQueue* rq, ProgramControlBlock* pcb) {
+int cq_dequeue(IReadyQueue* rq, ProgramControlBlock* pcb, int* quantum) {
     CircularQueue* cq = (CircularQueue*)rq->implementation;
     pthread_mutex_lock(&cq->mutex);
     
@@ -58,6 +59,7 @@ int cq_dequeue(IReadyQueue* rq, ProgramControlBlock* pcb) {
     cq->front = (cq->front + 1) % cq->capacity;
     
     pthread_mutex_unlock(&cq->mutex);
+    *quantum = cq->quantum;
     return 0;
 }
 

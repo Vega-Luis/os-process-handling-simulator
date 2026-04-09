@@ -1,12 +1,13 @@
 #include "priority_queue.h"
 #include <stdlib.h>
 
-PriorityQueue* pq_create(int capacity, int by_priority) {
+PriorityQueue* pq_create(int capacity, int by_priority, int quantum) {
     PriorityQueue* pq = (PriorityQueue*)malloc(sizeof(PriorityQueue));
     pq->items = (ProgramControlBlock*)malloc(capacity * sizeof(ProgramControlBlock));
     pq->size = 0;
     pq->capacity = capacity;
     pq->by_priority = by_priority;
+    pq->quantum = quantum;
 
     pthread_mutex_init(&pq->mutex, NULL);
     pthread_cond_init(&pq->cond, NULL);
@@ -64,7 +65,7 @@ void pq_enqueue(IReadyQueue* rq, ProgramControlBlock pcb) {
     pthread_mutex_unlock(&pq->mutex);
 }
 
-int pq_dequeue(IReadyQueue* rq, ProgramControlBlock* pcb) {
+int pq_dequeue(IReadyQueue* rq, ProgramControlBlock* pcb, int* quantum) {
     PriorityQueue* pq = (PriorityQueue*)rq->implementation;
     pthread_mutex_lock(&pq->mutex);
     while (pq->size == 0) {
@@ -74,6 +75,7 @@ int pq_dequeue(IReadyQueue* rq, ProgramControlBlock* pcb) {
     pq->items[0] = pq->items[--pq->size];
     heapify_down(pq, 0);
     pthread_mutex_unlock(&pq->mutex);
+    *quantum = pq->quantum;
     return 1;
 }
 

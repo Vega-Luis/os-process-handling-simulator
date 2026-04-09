@@ -28,10 +28,10 @@ void* manage_client(void* arg) {
         buffer_init(&buffer, buffer_data, REQUEST_SIZE);
         Request req;
         deserialize_request(&buffer, &req);
-        printf("Recibido: burst=%u, priority=%u\n", req.burst, req.priority);
 
         ProgramControlBlock pcb = {pid_counter, req.burst, req.priority};
         ready_queue->operations.enqueue(ready_queue, pcb);
+        printf("[ENQUEUED] PID: %u, Burst: %u, Priority: %u\n", pcb.pid, pcb.burst, pcb.priority);
 
         uint8_t res_buffer[RESPONSE_SIZE];
 

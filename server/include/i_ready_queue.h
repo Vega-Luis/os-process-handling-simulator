@@ -8,7 +8,7 @@ typedef struct IReadyQueue IReadyQueue;
 
 typedef struct {
     void (*enqueue)(IReadyQueue* queue, ProgramControlBlock pcb);
-    int (*dequeue)(IReadyQueue* queue, ProgramControlBlock* pcb);
+    int (*dequeue)(IReadyQueue* queue, ProgramControlBlock* pcb, int* quantum);
 } ReadyQueueOperations;
 
 struct IReadyQueue {
