@@ -16,5 +16,5 @@ struct IReadyQueue {
     ReadyQueueOperations operations;
 };
 
-IReadyQueue* create_ready_queue(SchedulerType type);
+IReadyQueue* create_ready_queue(SchedulerType type, int quantum);
 #endif // I_READY_QUEUE_H

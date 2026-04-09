@@ -7,7 +7,7 @@
 #include "./ready_queue/circular_queue.h"
 #include "./ready_queue/priority_queue.h"
 
-IReadyQueue* create_ready_queue(SchedulerType type) {
+IReadyQueue* create_ready_queue(SchedulerType type, int quantum) {
     IReadyQueue* ready_queue = malloc(sizeof(IReadyQueue));
 
     if (type == FIFO) {
@@ -23,7 +23,7 @@ IReadyQueue* create_ready_queue(SchedulerType type) {
         ready_queue->operations.enqueue = pq_enqueue;
         ready_queue->operations.dequeue = pq_dequeue;
     } else if (type == RR) {
-        ready_queue->implementation = cq_create(512, 4);
+        ready_queue->implementation = cq_create(512, quantum);
         ready_queue->operations.enqueue = cq_enqueue;
         ready_queue->operations.dequeue = cq_dequeue;
     } else {

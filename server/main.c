@@ -61,8 +61,9 @@ void* fifo_cpu_scheduler(void* arg) {
 
 
 int main() {
-    SchedulerType scheduler_type = select_scheduler();
-    IReadyQueue* ready_queue = create_ready_queue(scheduler_type);
+    int quantum = -1;
+    SchedulerType scheduler_type = select_scheduler(&quantum);
+    IReadyQueue* ready_queue = create_ready_queue(scheduler_type, quantum);
 
 
 
