@@ -2,8 +2,8 @@
 #define PRIORITY_QUEUE_H
 
 #include <pthread.h>
-#include "../i_ready_queue.h"
-#include "../pcb.h"
+#include "i_ready_queue.h"
+#include "pcb.h"
 
 
 typedef struct {

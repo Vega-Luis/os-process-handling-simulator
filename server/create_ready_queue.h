@@ -11,12 +11,6 @@ IReadyQueue* create_ready_queue(SchedulerType type) {
     IReadyQueue* ready_queue = malloc(sizeof(IReadyQueue));
 
     if (type == FIFO) {
-        /*
-        ready_queue->implementation = init_ready_queue();
-        ready_queue->operations.enqueue = enqueue;
-        ready_queue->operations.dequeue = dequeue;
-        */
-    } else if (type == RR) {
         ready_queue->implementation = cq_create(512);
         ready_queue->operations.enqueue = cq_enqueue;
         ready_queue->operations.dequeue = cq_dequeue;
@@ -24,13 +18,18 @@ IReadyQueue* create_ready_queue(SchedulerType type) {
         ready_queue->implementation = pq_create(512, 0);
         ready_queue->operations.enqueue = pq_enqueue;
         ready_queue->operations.dequeue = pq_dequeue;
+    } else if (type == HPF) {
+        ready_queue->implementation = pq_create(512, 1);
+        ready_queue->operations.enqueue = pq_enqueue;
+        ready_queue->operations.dequeue = pq_dequeue;
+    } else if (type == RR) {
+        ready_queue->implementation = cq_create(512);
+        ready_queue->operations.enqueue = cq_enqueue;
+        ready_queue->operations.dequeue = cq_dequeue;
     } else {
-        /*
-        ready_queue->implementation = heap_create(10, 1);
-        ready_queue->implementation.enqueue = heap_enqueue;
-        ready_queue->implementation.dequeue = heap_dequeue;
-        ready_queue->implementation.destroy = heap_destroy;
-        */
+        ready_queue->implementation = cq_create(512);
+        ready_queue->operations.enqueue = cq_enqueue;
+        ready_queue->operations.dequeue = cq_dequeue;
     }
 
     return ready_queue;

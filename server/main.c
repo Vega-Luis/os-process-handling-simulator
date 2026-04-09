@@ -22,10 +22,10 @@ void* job_scheduler(void *arg) {
         // so it won't consume CPU while waiting
         int client = accept_client(server_fd);
         if (client < 0) {
-            printf("Error al aceptar cliente\n");
+            fprintf(stderr, "Error al aceptar cliente\n");
             continue;
         }
-        printf("Cliente conectado\n");
+        printf("Cliente conectado: %d\n", client);
         ClientArgs* client_args = malloc(sizeof(ClientArgs));
         client_args->client = client;
         client_args->ready_queue = ready_queue;
@@ -74,8 +74,6 @@ int main() {
     
     pthread_t cpu_scheduler_thread;
     pthread_create(&cpu_scheduler_thread, NULL, fifo_cpu_scheduler, ready_queue);
-
-    printf("main thread esperando a job_scheduler_thread\n");
 
     pthread_join(cpu_scheduler_thread, NULL);
     pthread_join(job_scheduler_thread, NULL);

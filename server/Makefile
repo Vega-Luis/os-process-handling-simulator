@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -g -I../shared
+CFLAGS = -Wall -g -I../shared -Iinclude
 
 
 SRC=main.c ../shared/buffer.c ../shared/protocol.c ./client_handler.c ./server.c ./ready_queue/circular_queue.c ./ready_queue/priority_queue.c

@@ -3,9 +3,9 @@
 
 #include <stdlib.h>
 #include <pthread.h>
-#include "../i_ready_queue.h"
+#include "i_ready_queue.h"
 
-#include "../pcb.h"
+#include "pcb.h"
 
 typedef struct {
     ProgramControlBlock* items;
