@@ -2,7 +2,6 @@
 #define CREATE_READY_QUEUE_H
 
 #include <stdlib.h>
-#include "./ready_queue/ready_queue.h"
 #include "i_ready_queue.h"
 #include "scheduler_type.h"
 #include "./ready_queue/circular_queue.h"

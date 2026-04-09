@@ -6,7 +6,6 @@
 #include "protocol.h"
 #include "buffer.h"
 #include "pcb.h"
-#include "ready_queue/ready_queue.h"
 #include "client_args.h"
 #include "i_ready_queue.h"
 

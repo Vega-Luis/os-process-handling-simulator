@@ -4,7 +4,6 @@
 #include <unistd.h>
 #include "server.h"
 #include "client_handler.h"
-#include "ready_queue/ready_queue.h"
 #include "job_scheduler_args.h"
 #include "client_args.h"
 #include "menu.h"
