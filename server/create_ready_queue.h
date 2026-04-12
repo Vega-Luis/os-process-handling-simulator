@@ -14,22 +14,27 @@ IReadyQueue* create_ready_queue(SchedulerType type, int quantum) {
         ready_queue->implementation = cq_create(512, -1);
         ready_queue->operations.enqueue = cq_enqueue;
         ready_queue->operations.dequeue = cq_dequeue;
+        ready_queue->operations.shutdown = cq_shutdown;
     } else if (type == SJF) {
         ready_queue->implementation = pq_create(512, 0, -1);
         ready_queue->operations.enqueue = pq_enqueue;
         ready_queue->operations.dequeue = pq_dequeue;
+        ready_queue->operations.shutdown = pq_shutdown;
     } else if (type == HPF) {
         ready_queue->implementation = pq_create(512, 1, -1);
         ready_queue->operations.enqueue = pq_enqueue;
         ready_queue->operations.dequeue = pq_dequeue;
+        ready_queue->operations.shutdown = pq_shutdown;
     } else if (type == RR) {
         ready_queue->implementation = cq_create(512, quantum);
         ready_queue->operations.enqueue = cq_enqueue;
         ready_queue->operations.dequeue = cq_dequeue;
+        ready_queue->operations.shutdown = cq_shutdown;
     } else {
         ready_queue->implementation = cq_create(512, -1);
         ready_queue->operations.enqueue = cq_enqueue;
         ready_queue->operations.dequeue = cq_dequeue;
+        ready_queue->operations.shutdown = cq_shutdown;
     }
 
     return ready_queue;

@@ -11,6 +11,7 @@
 #include "time_manager.h"
 #include "create_ready_queue.h"
 #include "job_metrics.h"
+#include "system_control.h"
 #define PORT 8080
 
 void* job_scheduler(void *arg) {
@@ -19,13 +20,14 @@ void* job_scheduler(void *arg) {
     IReadyQueue* ready_queue = job_scheduler_args->ready_queue;
 
     
-    while (1) {
+    while (running) {
         // accept must lock until receives a client connection,
         // so it won't consume CPU while waiting
         int client = accept_client(server_fd);
         if (client < 0) {
+            if(!running) break;
             fprintf(stderr, "Error al aceptar cliente\n");
-            continue;
+            continue;;
         }
         printf("Cliente conectado: %d\n", client);
         ClientArgs* client_args = malloc(sizeof(ClientArgs));
@@ -34,15 +36,16 @@ void* job_scheduler(void *arg) {
 
         pthread_t hilo;
         pthread_create(&hilo, NULL, manage_client, client_args);
-        pthread_detach(hilo);
+        pthread_detach(hilo); 
     }
+    printf("Jos sale");
     return NULL;
 }
 
 void* cpu_scheduler(void* arg) {
     IReadyQueue* ready_queue = (IReadyQueue*)arg;
 
-    while (1) {
+    while (running) {
             ProgramControlBlock pcb;
             int quantum;
             ready_queue->operations.dequeue(ready_queue, &pcb, &quantum);
@@ -147,16 +150,30 @@ int main() {
 
 
     pthread_create(&job_scheduler_thread, NULL, job_scheduler, job_shceduler_args);
+    pthread_detach(job_scheduler_thread); // Detach para que se limpie automáticamente al terminar
     
     pthread_t cpu_scheduler_thread;
     pthread_create(&cpu_scheduler_thread, NULL, cpu_scheduler, ready_queue);
+    pthread_detach(cpu_scheduler_thread); // Detach para que se limpie automáticamente al terminar
+
+    int option;
 
     printf("Presione Enter para mostrar las métricas de los trabajos...\n");
-    getchar(); // consume posible '\n' previo
-    getchar(); // espera Enter real
+    scanf("%d", &option); 
+
+    printf("Deteniendo el servidor...\n");
+    running = 0; // Detiene los hilos
+    ready_queue->operations.shutdown(ready_queue);
+
+    printf("Cerrando socket del servidor...\n");
+    close(server_fd); // Cierra el socket para desbloquear accept
+
+
+
+    printf("Esperando timer...\n");
+    pthread_join(timer_thread, NULL);
+    printf("Mostrando métricas...\n");
     print_metrics();
-    pthread_join(cpu_scheduler_thread, NULL);
-    pthread_join(job_scheduler_thread, NULL);
 
     return 0;
 }

@@ -11,17 +11,21 @@
 #include "pid_manager.h"
 #include "time_manager.h"
 #include "job_metrics.h"
+#include "system_control.h"
 
 void* manage_client(void* arg) {
 
     ClientArgs* client_args = (ClientArgs*)arg;
-    int sock = client_args->client;
+    int client_fd = client_args->client;
     IReadyQueue* ready_queue = client_args->ready_queue;
 
-    while (1) {
+    while (running) {
         uint8_t buffer_data[REQUEST_SIZE];
+        printf("Esperando datos del cliente %d...\n", running);
 
-        int bytes = recv(sock, buffer_data, REQUEST_SIZE, 0);
+
+        int bytes = recv(client_fd, buffer_data, REQUEST_SIZE, 0);
+        printf("Recibidos %d bytes del cliente %d\n", bytes, running);
         if (bytes <= 0) {
             printf("Cliente desconectado\n");
             break;
@@ -52,8 +56,10 @@ void* manage_client(void* arg) {
         buffer_init(&res_buf, res_buffer, RESPONSE_SIZE);
         Response res = {pcb.pid};
         serialize_response(&res_buf, &res);
-        send(sock, res_buffer, res_buf.offset, 0);
+        send(client_fd, res_buffer, res_buf.offset, 0);
     }
-    close(sock);
+    printf("Cerrando conexión con el cliente\n");
+    close(client_fd);
+    free(client_args);
     return NULL;
 }

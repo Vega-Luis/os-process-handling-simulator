@@ -1,5 +1,6 @@
 #include "priority_queue.h"
 #include <stdlib.h>
+#include <stdio.h>
 
 PriorityQueue* pq_create(int capacity, int by_priority, int quantum) {
     PriorityQueue* pq = (PriorityQueue*)malloc(sizeof(PriorityQueue));
@@ -8,6 +9,8 @@ PriorityQueue* pq_create(int capacity, int by_priority, int quantum) {
     pq->capacity = capacity;
     pq->by_priority = by_priority;
     pq->quantum = quantum;
+
+    pq->running = 1;
 
     pthread_mutex_init(&pq->mutex, NULL);
     pthread_cond_init(&pq->cond, NULL);
@@ -71,6 +74,12 @@ int pq_dequeue(IReadyQueue* rq, ProgramControlBlock* pcb, int* quantum) {
     while (pq->size == 0) {
         pthread_cond_wait(&pq->cond, &pq->mutex);
     }
+
+    if (!pq->running && pq->size == 0) {
+        pthread_mutex_unlock(&pq->mutex);
+        return -1;
+    }
+
     *pcb = pq->items[0];
     pq->items[0] = pq->items[--pq->size];
     heapify_down(pq, 0);
@@ -86,4 +95,13 @@ void pq_destroy(IReadyQueue* rq) {
     free(pq->items);
     free(pq);
     free(rq);
+}
+
+void pq_shutdown(IReadyQueue* rq) {
+    PriorityQueue* pq = (PriorityQueue*)rq->implementation;
+    pthread_mutex_lock(&pq->mutex);
+    pq->running = 0;
+    pthread_cond_broadcast(&pq->cond);
+    pthread_mutex_unlock(&pq->mutex);
+    printf("Priority Queue shutdown initiated.\n");
 }

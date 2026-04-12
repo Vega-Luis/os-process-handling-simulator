@@ -9,6 +9,8 @@ CircularQueue* cq_create(int capacity, int quantum) {
     rq->front = 0;
     rq->rear = 0;
     rq->quantum = quantum;
+
+    rq->running = 1;
     
     pthread_mutex_init(&rq->mutex, NULL);
     pthread_cond_init(&rq->cond, NULL);
@@ -54,6 +56,11 @@ int cq_dequeue(IReadyQueue* rq, ProgramControlBlock* pcb, int* quantum) {
     while (cq->front == cq->rear) {
         pthread_cond_wait(&cq->cond, &cq->mutex);
     }
+
+    if (!cq->running && cq->front == cq->rear) {
+        pthread_mutex_unlock(&cq->mutex);
+        return -1;
+    }
     
     *pcb = cq->items[cq->front];
     cq->front = (cq->front + 1) % cq->capacity;
@@ -75,4 +82,12 @@ void cq_destroy(IReadyQueue* rq) {
 int cq_is_empty(IReadyQueue* rq) {
     CircularQueue* cq = (CircularQueue*)rq->implementation;
     return cq->front == cq->rear;
+}
+
+void cq_shutdown(IReadyQueue* rq) {
+    CircularQueue* cq = (CircularQueue*)rq->implementation;
+    pthread_mutex_lock(&cq->mutex);
+    cq->running = 0;
+    pthread_cond_broadcast(&cq->cond);
+    pthread_mutex_unlock(&cq->mutex);
 }
