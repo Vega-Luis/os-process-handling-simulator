@@ -2,38 +2,39 @@
 #define CREATE_READY_QUEUE_H
 
 #include <stdlib.h>
-#include "./ready_queue/ready_queue.h"
 #include "i_ready_queue.h"
 #include "scheduler_type.h"
 #include "./ready_queue/circular_queue.h"
+#include "./ready_queue/priority_queue.h"
 
-IReadyQueue* create_ready_queue(SchedulerType type) {
+IReadyQueue* create_ready_queue(SchedulerType type, int quantum) {
     IReadyQueue* ready_queue = malloc(sizeof(IReadyQueue));
 
     if (type == FIFO) {
-        /*
-        ready_queue->implementation = init_ready_queue();
-        ready_queue->operations.enqueue = enqueue;
-        ready_queue->operations.dequeue = dequeue;
-        */
-    } else if (type == RR) {
-        ready_queue->implementation = cq_create(512);
+        ready_queue->implementation = cq_create(512, -1);
         ready_queue->operations.enqueue = cq_enqueue;
         ready_queue->operations.dequeue = cq_dequeue;
-    } else if (type == SJF || type == HPF) {
-        /*
-        ready_queue->implementation = heap_create(10, 0);
-        ready_queue->implementation.enqueue = heap_enqueue;
-        ready_queue->implementation.dequeue = heap_dequeue;
-        ready_queue->implementation.destroy = heap_destroy;
-        */
+        ready_queue->operations.shutdown = cq_shutdown;
+    } else if (type == SJF) {
+        ready_queue->implementation = pq_create(512, 0, -1);
+        ready_queue->operations.enqueue = pq_enqueue;
+        ready_queue->operations.dequeue = pq_dequeue;
+        ready_queue->operations.shutdown = pq_shutdown;
+    } else if (type == HPF) {
+        ready_queue->implementation = pq_create(512, 1, -1);
+        ready_queue->operations.enqueue = pq_enqueue;
+        ready_queue->operations.dequeue = pq_dequeue;
+        ready_queue->operations.shutdown = pq_shutdown;
+    } else if (type == RR) {
+        ready_queue->implementation = cq_create(512, quantum);
+        ready_queue->operations.enqueue = cq_enqueue;
+        ready_queue->operations.dequeue = cq_dequeue;
+        ready_queue->operations.shutdown = cq_shutdown;
     } else {
-        /*
-        ready_queue->implementation = heap_create(10, 1);
-        ready_queue->implementation.enqueue = heap_enqueue;
-        ready_queue->implementation.dequeue = heap_dequeue;
-        ready_queue->implementation.destroy = heap_destroy;
-        */
+        ready_queue->implementation = cq_create(512, -1);
+        ready_queue->operations.enqueue = cq_enqueue;
+        ready_queue->operations.dequeue = cq_dequeue;
+        ready_queue->operations.shutdown = cq_shutdown;
     }
 
     return ready_queue;

@@ -6,21 +6,26 @@
 #include "protocol.h"
 #include "buffer.h"
 #include "pcb.h"
-#include "ready_queue/ready_queue.h"
 #include "client_args.h"
 #include "i_ready_queue.h"
+#include "pid_manager.h"
+#include "time_manager.h"
+#include "job_metrics.h"
+#include "system_control.h"
 
 void* manage_client(void* arg) {
-    uint32_t pid_counter = 1;
 
     ClientArgs* client_args = (ClientArgs*)arg;
-    int sock = client_args->client;
+    int client_fd = client_args->client;
     IReadyQueue* ready_queue = client_args->ready_queue;
 
-    while (1) {
+    while (running) {
         uint8_t buffer_data[REQUEST_SIZE];
+        printf("Esperando datos del cliente %d...\n", running);
 
-        int bytes = recv(sock, buffer_data, REQUEST_SIZE, 0);
+
+        int bytes = recv(client_fd, buffer_data, REQUEST_SIZE, 0);
+        printf("Recibidos %d bytes del cliente %d\n", bytes, running);
         if (bytes <= 0) {
             printf("Cliente desconectado\n");
             break;
@@ -29,19 +34,32 @@ void* manage_client(void* arg) {
         buffer_init(&buffer, buffer_data, REQUEST_SIZE);
         Request req;
         deserialize_request(&buffer, &req);
-        printf("Recibido: burst=%u, priority=%u\n", req.burst, req.priority);
 
-        ProgramControlBlock pcb = {pid_counter, req.burst, req.priority};
+        ProgramControlBlock pcb = {generate_pid(), req.burst, req.priority};
         ready_queue->operations.enqueue(ready_queue, pcb);
+        printf("[ENQUEUED] PID: %u, Burst: %u, Priority: %u\n", pcb.pid, pcb.burst, pcb.priority);
+        int arrival_time;
+        pthread_mutex_lock(&time_mutex);
+        arrival_time = current_time;
+        pthread_mutex_unlock(&time_mutex);
+        pthread_mutex_lock(&job_metrics_mutex);
+        job_metrics[pcb.pid].pid = pcb.pid;
+        job_metrics[pcb.pid].burst = pcb.burst;
+        job_metrics[pcb.pid].priority = pcb.priority;
+        job_metrics[pcb.pid].arrival_time = arrival_time;
+        job_count++;
+        pthread_mutex_unlock(&job_metrics_mutex);
 
         uint8_t res_buffer[RESPONSE_SIZE];
 
         Buffer res_buf;
         buffer_init(&res_buf, res_buffer, RESPONSE_SIZE);
-        Response res = {pid_counter++};
+        Response res = {pcb.pid};
         serialize_response(&res_buf, &res);
-        send(sock, res_buffer, res_buf.offset, 0);
+        send(client_fd, res_buffer, res_buf.offset, 0);
     }
-    close(sock);
+    printf("Cerrando conexión con el cliente\n");
+    close(client_fd);
+    free(client_args);
     return NULL;
 }

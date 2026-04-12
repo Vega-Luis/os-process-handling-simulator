@@ -1,7 +1,7 @@
 #ifndef CLIENT_ARGS_H
 #define CLIENT_ARGS_H
 
-#include "ready_queue/ready_queue.h"
+#include "i_ready_queue.h"
 
 typedef struct {
     int client;

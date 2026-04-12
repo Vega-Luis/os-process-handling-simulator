@@ -4,7 +4,14 @@
 #include <stdio.h>
 #include "scheduler_type.h"
 
-SchedulerType select_scheduler() {
+int select_quantum() {
+    int quantum;
+    printf("Ingrese el quantum para Round Robin: ");
+    scanf("%i", &quantum);
+    return quantum;
+}
+
+SchedulerType select_scheduler(int* quantum) {
     int option;
 
     printf("Seleccione el algoritmo de scheduling:\n");
@@ -20,7 +27,7 @@ SchedulerType select_scheduler() {
         case 1: return FIFO;
         case 2: return SJF;
         case 3: return HPF;
-        case 4: return RR;
+        case 4: *quantum = select_quantum(); return RR;
         default:
             printf("Opcion invalida, usando FIFO por defecto.\n");
             return FIFO;
