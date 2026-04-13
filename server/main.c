@@ -44,13 +44,11 @@ int main() {
     scanf("%d", &option); 
 
     printf("Deteniendo el servidor...\n");
-    running = 0; // Detiene los hilos
+    running = 0; 
     ready_queue->operations.shutdown(ready_queue);
 
     printf("Cerrando socket del servidor...\n");
-    close(server_fd); // Cierra el socket para desbloquear accept
-
-
+    close(server_fd);
 
     printf("Esperando timer...\n");
     pthread_join(timer_thread, NULL);

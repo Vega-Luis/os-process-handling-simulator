@@ -21,11 +21,9 @@ void* job_scheduler(void* arg) {
 
     while (running) {
         uint8_t buffer_data[REQUEST_SIZE];
-        printf("Esperando datos del cliente %d...\n", running);
 
 
         int bytes = recv(client_fd, buffer_data, REQUEST_SIZE, 0);
-        printf("Recibidos %d bytes del cliente %d\n", bytes, running);
         if (bytes <= 0) {
             printf("Cliente desconectado\n");
             break;

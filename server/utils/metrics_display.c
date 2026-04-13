@@ -18,8 +18,8 @@ void print_metrics() {
         return;
     }
 
-    printf("%-5s %-7s %-15s %-15s %-7s %-7s\n",
-           "PID", "Burst", "Arrival Time", "Finish Time", "TAT", "WT");
+    printf("%-5s %-7s %-10s %-15s %-15s %-7s %-7s\n",
+           "PID", "Burst", "Priority","Arrival Time", "Finish Time", "TAT", "WT");
 
     printf("---------------------------------------------------------------\n");
 
@@ -39,9 +39,10 @@ void print_metrics() {
         total_wt += wt;
         printed_jobs++;
 
-        printf("%-5u %-7u %-15d %-15d %-7d %-7d\n",
+        printf("%-5u %-7u %-10u %-15d %-15d %-7d %-7d\n",
                job->pid,
                job->burst,
+               job->priority,
                job->arrival_time,
                job->finish_time,
                tat,

@@ -8,7 +8,7 @@
 
 #include "client_args.h"
 #include "client_handler_args.h"
-#include "client_handler.h"
+#include "schedulers.h"
 #include "system_control.h"
 
 
@@ -55,7 +55,7 @@ void* client_handler(void *arg) {
         client_args->ready_queue = ready_queue;
 
         pthread_t hilo;
-        pthread_create(&hilo, NULL, manage_client, client_args);
+        pthread_create(&hilo, NULL, job_scheduler, client_args);
         pthread_detach(hilo); 
     }
     printf("Jos sale");
