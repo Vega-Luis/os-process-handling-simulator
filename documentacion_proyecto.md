@@ -1,5 +1,5 @@
 # Proyecto 1 - Simulación de Planificación de Procesos
-### Sistemas Operativos | Escuela de Computación | I Semestre 2026
+### Principios de Sistemas Operativos | Escuela de Computación | I Semestre 2026
 ### Instituto Tecnológico de Costa Rica
 ### Profesora: Erika Marín Schumann
 
@@ -9,7 +9,6 @@
 - Luis Vega Rodríguez — 2018161651
 - Gabriel Gutiérrez Mata — 2022437833
 
-**Fecha de entrega:** 13 de abril de 2026
 
 ---
 
@@ -45,7 +44,7 @@ Este proyecto permitió poner en práctica conceptos fundamentales de los sistem
 
 ### Arquitectura General
 
-![alt text](arq.drawio-2.png)
+![alt text](arquitectura.png)
 
 El sistema está compuesto por dos programas independientes que se comunican mediante sockets TCP: el cliente y el servidor.
 
@@ -76,7 +75,6 @@ La comunicación utiliza un protocolo binario propio implementado con un sistema
 
 ### El Servidor
 
-> _[Le toca al compañero encargado del servidor completar esta sección]_
 
 **JOB Scheduler:**
 > _Describir cómo recibe los procesos, asigna PIDs y construye el PCB._
@@ -138,7 +136,6 @@ Organización de proyectos en C: Se aprendió a estructurar un proyecto en C con
   
 - **Comunicación con el equipo:** Se reforzó la necesidad de mantener comunicación constante con los compañeros para coordinar cambios en archivos compartidos como los headers del protocolo, evitando conflictos y retrabajos.
 
-> _Cada integrante debe agregar sus propias lecciones aprendidas._
 
 ---
 
@@ -319,19 +316,23 @@ BURST PRIORIDAD
 
 ## Bitácora de Trabajo
 
-### Semana 1
 
-| Fecha | Integrante | Actividad realizada |
-|---|---|---|
-| 20/03/2026 | Luis Vega | | 
-| 27/03/2026 | Gabriel Gutiérrez | |
+#### Semana 1 — 20 de marzo al 27 de marzo
 
-### Semana 2
+| Actividad realizada |
+|---|
+ | Lectura del enunciado, definición de la arquitectura general y acuerdo sobre el protocolo de comunicación |
+| Configuración del entorno de desarrollo con WSL2 y gcc, implementación del socket básico del cliente e implementación del protocolo buffer |
+| Diseño de la estructura del PCB y la cola de procesos, implementación del socket básico del servidor e implementación del JOB Scheduler |
+ | Consulta con la profesora en clase |
 
-| Fecha | Integrante | Actividad realizada |
-|---|---|---|
-| 6/04/2026 | Luis Vega | |
-| 10/04/2026 | Gabriel Gutiérrez  | |
+#### Semana 2 — 27 de marzo al 10 de abril
+
+ | Actividad realizada |
+|---|
+ | Implementación del modo manual y modo automático, pruebas del cliente con el servidor |
+| Implementación de los algoritmos FIFO, SJF, HPF y Round Robin, implementación del resumen final |
+| Consulta con la profesora en clase, pruebas de integración, corrección de bugs y redacción de la documentación |
 
 
 ---
