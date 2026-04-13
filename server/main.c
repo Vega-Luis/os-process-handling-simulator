@@ -2,16 +2,22 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <unistd.h>
-#include "server.h"
+
 #include "menu.h"
-#include "client_handler_args.h"
-#include "i_ready_queue.h"
-#include "time_manager.h"
-#include "create_ready_queue.h"
-#include "job_metrics.h"
+#include "server.h"
 #include "system_control.h"
-#include "schedulers.h"
+
+#include "i_ready_queue.h"
+
+#include "create_ready_queue.h"
+
+#include "job_metrics.h"
 #include "metrics_display.h"
+#include "schedulers.h"
+#include "time_manager.h"
+
+#include "client_handler_args.h"
+
 #define PORT 8080
 
 int main() {
@@ -24,13 +30,11 @@ int main() {
 
     int server_fd = create_server_socket(PORT);
 
-    pthread_t client_handler_thread;
-
     ClientHandlerArgs* client_handler_args= malloc(sizeof(ClientHandlerArgs));
     client_handler_args->server_fd = server_fd;
     client_handler_args->ready_queue = ready_queue;
 
-
+    pthread_t client_handler_thread;
     pthread_create(&client_handler_thread, NULL, client_handler, client_handler_args);
     pthread_detach(client_handler_thread);
     
@@ -43,14 +47,13 @@ int main() {
     printf("Presione Enter para mostrar las métricas de los trabajos...\n");
     scanf("%d", &option); 
 
-    printf("Deteniendo el servidor...\n");
     running = 0; 
     ready_queue->operations.shutdown(ready_queue);
+    printf("Deteniendo el servidor...\n");
 
-    printf("Cerrando socket del servidor...\n");
     close(server_fd);
+    printf("Cerrando socket del servidor...\n");
 
-    printf("Esperando timer...\n");
     pthread_join(timer_thread, NULL);
     printf("Mostrando métricas...\n");
     print_metrics();
