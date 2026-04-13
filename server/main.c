@@ -10,39 +10,9 @@
 #include "create_ready_queue.h"
 #include "job_metrics.h"
 #include "system_control.h"
+#include "schedulers.h"
 #include "metrics_display.h"
 #define PORT 8080
-
-void* cpu_scheduler(void* arg) {
-    IReadyQueue* ready_queue = (IReadyQueue*)arg;
-
-    while (running) {
-            ProgramControlBlock pcb;
-            int quantum;
-            ready_queue->operations.dequeue(ready_queue, &pcb, &quantum);
-            int time_slice = (quantum > 0 && quantum < (int) pcb.burst) ? quantum : pcb.burst;
-            printf("[RUN]      PID: %u, Burst: %u, Priority: %u Time slice: %i\n", pcb.pid, pcb.burst, pcb.priority, time_slice);
-            sleep(time_slice); // Simula la ejecución del proceso
-            int new_burst = pcb.burst - (int)time_slice;
-            if (new_burst > 0) {
-                pcb.burst = (uint32_t)new_burst;
-                ready_queue->operations.enqueue(ready_queue, pcb);
-                printf("[REQUEUED] PID: %u, Burst: %u, Priority: %u\n", pcb.pid, pcb.burst, pcb.priority);
-            } else {
-                printf("[FINISHED] PID: %u\n", pcb.pid);
-                int finish_time;
-                pthread_mutex_lock(&time_mutex);
-                finish_time = current_time;
-                pthread_mutex_unlock(&time_mutex); 
-                pthread_mutex_lock(&job_metrics_mutex);
-                job_metrics[pcb.pid].finish_time = finish_time;
-                job_metrics[pcb.pid].finished = 1;
-                total_finished_jobs++;
-                pthread_mutex_unlock(&job_metrics_mutex);
-            }
-    }
-    return NULL;
-}
 
 int main() {
     pthread_t timer_thread;
