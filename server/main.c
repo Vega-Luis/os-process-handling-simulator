@@ -3,10 +3,8 @@
 #include <pthread.h>
 #include <unistd.h>
 #include "server.h"
-#include "client_handler.h"
-#include "job_scheduler_args.h"
-#include "client_args.h"
 #include "menu.h"
+#include "client_handler_args.h"
 #include "i_ready_queue.h"
 #include "time_manager.h"
 #include "create_ready_queue.h"
@@ -14,34 +12,6 @@
 #include "system_control.h"
 #include "metrics_display.h"
 #define PORT 8080
-
-void* job_scheduler(void *arg) {
-    JobSchedulerArgs* job_scheduler_args= (JobSchedulerArgs*)arg;
-    int server_fd = job_scheduler_args->server_fd;
-    IReadyQueue* ready_queue = job_scheduler_args->ready_queue;
-
-    
-    while (running) {
-        // accept must lock until receives a client connection,
-        // so it won't consume CPU while waiting
-        int client = accept_client(server_fd);
-        if (client < 0) {
-            if(!running) break;
-            fprintf(stderr, "Error al aceptar cliente\n");
-            continue;;
-        }
-        printf("Cliente conectado: %d\n", client);
-        ClientArgs* client_args = malloc(sizeof(ClientArgs));
-        client_args->client = client;
-        client_args->ready_queue = ready_queue;
-
-        pthread_t hilo;
-        pthread_create(&hilo, NULL, manage_client, client_args);
-        pthread_detach(hilo); 
-    }
-    printf("Jos sale");
-    return NULL;
-}
 
 void* cpu_scheduler(void* arg) {
     IReadyQueue* ready_queue = (IReadyQueue*)arg;
@@ -84,19 +54,19 @@ int main() {
 
     int server_fd = create_server_socket(PORT);
 
-    pthread_t job_scheduler_thread;
+    pthread_t client_handler_thread;
 
-    JobSchedulerArgs* job_shceduler_args= malloc(sizeof(JobSchedulerArgs));
-    job_shceduler_args->server_fd = server_fd;
-    job_shceduler_args->ready_queue = ready_queue;
+    ClientHandlerArgs* client_handler_args= malloc(sizeof(ClientHandlerArgs));
+    client_handler_args->server_fd = server_fd;
+    client_handler_args->ready_queue = ready_queue;
 
 
-    pthread_create(&job_scheduler_thread, NULL, job_scheduler, job_shceduler_args);
-    pthread_detach(job_scheduler_thread); // Detach para que se limpie automáticamente al terminar
+    pthread_create(&client_handler_thread, NULL, client_handler, client_handler_args);
+    pthread_detach(client_handler_thread);
     
     pthread_t cpu_scheduler_thread;
     pthread_create(&cpu_scheduler_thread, NULL, cpu_scheduler, ready_queue);
-    pthread_detach(cpu_scheduler_thread); // Detach para que se limpie automáticamente al terminar
+    pthread_detach(cpu_scheduler_thread);
 
     int option;
 
