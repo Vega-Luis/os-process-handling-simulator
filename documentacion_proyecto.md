@@ -135,7 +135,7 @@ En el caso del **RR** si el time slice es mayor al burst, el tiempo de ejecució
 | 14 | CPU Scheduler - Round Robin | 100% | |
 | 15 | Cola de procesos con mutex | 100% | |
 | 16 | Resumen final (TAT, WT, promedios) | 100% | |
-| 17 | Comando para consultar cola en ejecución | % | |
+| 17 | Comando para consultar cola en ejecución | 95% | En lugar de un comando para consultar se implementa un log que permite ver en tiempo real el estado de la cola de ejecucion |
 
 *Aclaraciones* La simulacion asigna pid segun orden de llegada.
 Los logs permiten ver de manera detallada el momento de llegada de cada tarea y el orden ejecucion.
@@ -304,89 +304,7 @@ Organización de proyectos en C: Se aprendió a estructurar un proyecto en C con
 
 ### Prueba 5 — Round Robin con quantum
 
-| Campo | Detalle |
-|---|---|
-| **Descripción** | Verificar RR. Itera entre los disponibles con un quantum de 2 |
-| **Log de ejecucion** | [ENQUEUED] PID: 1, Burst: 9, Priority: 5
-[RUN]      PID: 1, Burst: 9, Priority: 5 Time slice: 2
-[REQUEUED] PID: 1, Burst: 7, Priority: 5
-[RUN]      PID: 1, Burst: 7, Priority: 5 Time slice: 2
-[REQUEUED] PID: 1, Burst: 5, Priority: 5
-[RUN]      PID: 1, Burst: 5, Priority: 5 Time slice: 2
-[REQUEUED] PID: 1, Burst: 3, Priority: 5
-[RUN]      PID: 1, Burst: 3, Priority: 5 Time slice: 2
-[ENQUEUED] PID: 2, Burst: 4, Priority: 3
-[REQUEUED] PID: 1, Burst: 1, Priority: 5
-[RUN]      PID: 2, Burst: 4, Priority: 3 Time slice: 2
-[REQUEUED] PID: 2, Burst: 2, Priority: 3
-[RUN]      PID: 1, Burst: 1, Priority: 5 Time slice: 1
-[FINISHED] PID: 1
-[RUN]      PID: 2, Burst: 2, Priority: 3 Time slice: 2
-[ENQUEUED] PID: 3, Burst: 7, Priority: 6
-[FINISHED] PID: 2
-[RUN]      PID: 3, Burst: 7, Priority: 6 Time slice: 2
-[REQUEUED] PID: 3, Burst: 5, Priority: 6
-[RUN]      PID: 3, Burst: 5, Priority: 6 Time slice: 2
-[REQUEUED] PID: 3, Burst: 3, Priority: 6
-[RUN]      PID: 3, Burst: 3, Priority: 6 Time slice: 2
-[ENQUEUED] PID: 4, Burst: 3, Priority: 2
-[REQUEUED] PID: 3, Burst: 1, Priority: 6
-[RUN]      PID: 4, Burst: 3, Priority: 2 Time slice: 2
-[REQUEUED] PID: 4, Burst: 1, Priority: 2
-[RUN]      PID: 3, Burst: 1, Priority: 6 Time slice: 1
-[ENQUEUED] PID: 5, Burst: 12, Priority: 4
-[FINISHED] PID: 3
-[RUN]      PID: 4, Burst: 1, Priority: 2 Time slice: 1
-[FINISHED] PID: 4
-[RUN]      PID: 5, Burst: 12, Priority: 4 Time slice: 2
-[REQUEUED] PID: 5, Burst: 10, Priority: 4
-[RUN]      PID: 5, Burst: 10, Priority: 4 Time slice: 2
-[REQUEUED] PID: 5, Burst: 8, Priority: 4
-[RUN]      PID: 5, Burst: 8, Priority: 4 Time slice: 2
-[REQUEUED] PID: 5, Burst: 6, Priority: 4
-[RUN]      PID: 5, Burst: 6, Priority: 4 Time slice: 2
-[ENQUEUED] PID: 6, Burst: 5, Priority: 7
-[REQUEUED] PID: 5, Burst: 4, Priority: 4
-[RUN]      PID: 6, Burst: 5, Priority: 7 Time slice: 2
-[REQUEUED] PID: 6, Burst: 3, Priority: 7
-[RUN]      PID: 5, Burst: 4, Priority: 4 Time slice: 2
-[ENQUEUED] PID: 7, Burst: 8, Priority: 1
-[REQUEUED] PID: 5, Burst: 2, Priority: 4
-[RUN]      PID: 6, Burst: 3, Priority: 7 Time slice: 2
-[ENQUEUED] PID: 8, Burst: 6, Priority: 5
-[REQUEUED] PID: 6, Burst: 1, Priority: 7
-[RUN]      PID: 7, Burst: 8, Priority: 1 Time slice: 2
-[REQUEUED] PID: 7, Burst: 6, Priority: 1
-[RUN]      PID: 5, Burst: 2, Priority: 4 Time slice: 2
-[FINISHED] PID: 5
-[RUN]      PID: 8, Burst: 6, Priority: 5 Time slice: 2
-[ENQUEUED] PID: 9, Burst: 2, Priority: 8
-[REQUEUED] PID: 8, Burst: 4, Priority: 5
-[RUN]      PID: 6, Burst: 1, Priority: 7 Time slice: 1
-[FINISHED] PID: 6
-[RUN]      PID: 7, Burst: 6, Priority: 1 Time slice: 2
-[REQUEUED] PID: 7, Burst: 4, Priority: 1
-[RUN]      PID: 9, Burst: 2, Priority: 8 Time slice: 2
-[FINISHED] PID: 9
-[RUN]      PID: 8, Burst: 4, Priority: 5 Time slice: 2
-[ENQUEUED] PID: 10, Burst: 10, Priority: 3
-[REQUEUED] PID: 8, Burst: 2, Priority: 5
-[RUN]      PID: 7, Burst: 4, Priority: 1 Time slice: 2
-[REQUEUED] PID: 7, Burst: 2, Priority: 1
-[RUN]      PID: 10, Burst: 10, Priority: 3 Time slice: 2
-[REQUEUED] PID: 10, Burst: 8, Priority: 3
-[RUN]      PID: 8, Burst: 2, Priority: 5 Time slice: 2
-[FINISHED] PID: 8
-[RUN]      PID: 7, Burst: 2, Priority: 1 Time slice: 2
-[FINISHED] PID: 7
-[RUN]      PID: 10, Burst: 8, Priority: 3 Time slice: 2
-[REQUEUED] PID: 10, Burst: 6, Priority: 3
-[RUN]      PID: 10, Burst: 6, Priority: 3 Time slice: 2
-[REQUEUED] PID: 10, Burst: 4, Priority: 3
-[RUN]      PID: 10, Burst: 4, Priority: 3 Time slice: 2
-[REQUEUED] PID: 10, Burst: 2, Priority: 3
-[RUN]      PID: 10, Burst: 2, Priority: 3 Time slice: 2
-[FINISHED] PID: 10 |
+
 
 ---
 
