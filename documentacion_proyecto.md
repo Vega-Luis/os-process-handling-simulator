@@ -137,6 +137,10 @@ En el caso del **RR** si el time slice es mayor al burst, el tiempo de ejecució
 | 16 | Resumen final (TAT, WT, promedios) | 100% | |
 | 17 | Comando para consultar cola en ejecución | % | |
 
+*Aclaraciones* La simulacion asigna pid segun orden de llegada.
+Los logs permiten ver de manera detallada el momento de llegada de cada tarea y el orden ejecucion.
+La tabla de metricas es indexada por pid, por lo que el orden de impresion es por pid, para analizar a detalle prestar especial atencion a los tiempos de llegada y los tiempos de finalizacion de cada tarea.
+
 ---
 
 ## Lecciones Aprendidas
@@ -207,24 +211,182 @@ Organización de proyectos en C: Se aprendió a estructurar un proyecto en C con
 ---
 
 ### Prueba 4 — Algoritmo FIFO
-> _[Le toca al compañero del servidor]_
 
 | Campo | Detalle |
 |---|---|
-| **Descripción** | |
-| **Resultado esperado** | |
-| **Resultado obtenido** | |
+| **Descripción** | Verificar comportamiento FIFO. Salida mismo orden que archivo |
+| **Archivo de entrada** | ./test/fifo.txt
+| **Resultado esperado** |  `8 3 / 7 2 / 5 9 / 3 1/ 12 7`|
+| **Resultado obtenido** | `8 3 / 7 2 / 5 9 / 3 1/ 12 7`|
+
+---
+### Prueba 5 — Algoritmo SJF
+
+| Campo | Detalle |
+|---|---|
+| **Descripción** | Verificar comportamiento SJF. CPU ejecuta los el mas peque;o de los disponibles|
+| **Archivo de entrada** | ./test/sjf.txt
+| **Log de ejecucion** |
+[ENQUEUED] PID: 1, Burst: 20, Priority: 5
+[RUN]      PID: 1, Burst: 20, Priority: 5 Time slice: 20
+[ENQUEUED] PID: 2, Burst: 10, Priority: 3
+[ENQUEUED] PID: 3, Burst: 2, Priority: 9
+[ENQUEUED] PID: 4, Burst: 5, Priority: 4
+[FINISHED] PID: 1
+[RUN]      PID: 3, Burst: 2, Priority: 9 Time slice: 2
+[FINISHED] PID: 3
+[RUN]      PID: 4, Burst: 5, Priority: 4 Time slice: 5
+[ENQUEUED] PID: 5, Burst: 1, Priority: 8
+[FINISHED] PID: 4
+[RUN]      PID: 5, Burst: 1, Priority: 8 Time slice: 1
+[FINISHED] PID: 5
+[RUN]      PID: 2, Burst: 10, Priority: 3 Time slice: 10
+[ENQUEUED] PID: 6, Burst: 20, Priority: 2
+[ENQUEUED] PID: 7, Burst: 1, Priority: 7
+[FINISHED] PID: 2
+[RUN]      PID: 7, Burst: 1, Priority: 7 Time slice: 1
+[FINISHED] PID: 7
+[RUN]      PID: 6, Burst: 20, Priority: 2 Time slice: 20
+[ENQUEUED] PID: 8, Burst: 12, Priority: 6
+[ENQUEUED] PID: 9, Burst: 4, Priority: 1
+[ENQUEUED] PID: 10, Burst: 15, Priority: 5
+[FINISHED] PID: 6
+[RUN]      PID: 9, Burst: 4, Priority: 1 Time slice: 4
+[FINISHED] PID: 9
+[RUN]      PID: 8, Burst: 12, Priority: 6 Time slice: 12
+[FINISHED] PID: 8
+[RUN]      PID: 10, Burst: 15, Priority: 5 Time slice: 15
+[FINISHED] PID: 10|
+| **Resultado esperado** |  `1 20 5 / 3 2 9 / 4 5 4 / 5 1 8 / 2 10 3 / 7 1 7 / 6 20 2 / 9 4 1 / 8 12 6 / 10 15 5`|
+| **Resultado obtenido** | `1 20 5 / 3 2 9 / 4 5 4 / 5 1 8 / 2 10 3 / 7 1 7 / 6 20 2 / 9 4 1 / 8 12 6 / 10 15 5`|
+
+---
+### Prueba 6 — HPF
+
+| Campo | Detalle |
+|---|---|
+| **Descripción** | Verificar HPF. Toma el que tiene mayor prioridad de los disponibles |
+| **Log de ejecucion** |
+[ENQUEUED] PID: 1, Burst: 20, Priority: 8
+[RUN]      PID: 1, Burst: 20, Priority: 8 Time slice: 20
+[ENQUEUED] PID: 2, Burst: 15, Priority: 7
+[ENQUEUED] PID: 3, Burst: 18, Priority: 6
+[ENQUEUED] PID: 4, Burst: 17, Priority: 5
+[FINISHED] PID: 1
+[RUN]      PID: 4, Burst: 17, Priority: 5 Time slice: 17
+[ENQUEUED] PID: 5, Burst: 16, Priority: 4
+[ENQUEUED] PID: 6, Burst: 5, Priority: 3
+[FINISHED] PID: 4
+[RUN]      PID: 6, Burst: 5, Priority: 3 Time slice: 5
+[ENQUEUED] PID: 7, Burst: 4, Priority: 2
+[FINISHED] PID: 6
+[RUN]      PID: 7, Burst: 4, Priority: 2 Time slice: 4
+[ENQUEUED] PID: 8, Burst: 3, Priority: 1
+[FINISHED] PID: 7
+[RUN]      PID: 8, Burst: 3, Priority: 1 Time slice: 3
+[FINISHED] PID: 8
+[RUN]      PID: 5, Burst: 16, Priority: 4 Time slice: 16
+[ENQUEUED] PID: 9, Burst: 2, Priority: 2
+[ENQUEUED] PID: 10, Burst: 1, Priority: 1
+[FINISHED] PID: 5
+[RUN]      PID: 10, Burst: 1, Priority: 1 Time slice: 1
+[FINISHED] PID: 10
+[RUN]      PID: 9, Burst: 2, Priority: 2 Time slice: 2
+[FINISHED] PID: 9
+[RUN]      PID: 3, Burst: 18, Priority: 6 Time slice: 18
+[FINISHED] PID: 3
+[RUN]      PID: 2, Burst: 15, Priority: 7 Time slice: 15
+[FINISHED] PID: 2|
+| **Resultado esperado** | `1 20 8 / 4 17 5 / 6 5 3 / 7 4 2 / 8 3 1 / 5 16 4 / 10 1 1 / 9 2 2 / 3 18 6 / 2 15 7` |
+| **Resultado obtenido** | `1 20 8 / 4 17 5 / 6 5 3 / 7 4 2 / 8 3 1 / 5 16 4 / 10 1 1 / 9 2 2 / 3 18 6 / 2 15 7`|
 
 ---
 
 ### Prueba 5 — Round Robin con quantum
-> _[Le toca al compañero del servidor]_
 
 | Campo | Detalle |
 |---|---|
-| **Descripción** | |
-| **Resultado esperado** | |
-| **Resultado obtenido** | |
+| **Descripción** | Verificar RR. Itera entre los disponibles con un quantum de 2 |
+| **Log de ejecucion** | [ENQUEUED] PID: 1, Burst: 9, Priority: 5
+[RUN]      PID: 1, Burst: 9, Priority: 5 Time slice: 2
+[REQUEUED] PID: 1, Burst: 7, Priority: 5
+[RUN]      PID: 1, Burst: 7, Priority: 5 Time slice: 2
+[REQUEUED] PID: 1, Burst: 5, Priority: 5
+[RUN]      PID: 1, Burst: 5, Priority: 5 Time slice: 2
+[REQUEUED] PID: 1, Burst: 3, Priority: 5
+[RUN]      PID: 1, Burst: 3, Priority: 5 Time slice: 2
+[ENQUEUED] PID: 2, Burst: 4, Priority: 3
+[REQUEUED] PID: 1, Burst: 1, Priority: 5
+[RUN]      PID: 2, Burst: 4, Priority: 3 Time slice: 2
+[REQUEUED] PID: 2, Burst: 2, Priority: 3
+[RUN]      PID: 1, Burst: 1, Priority: 5 Time slice: 1
+[FINISHED] PID: 1
+[RUN]      PID: 2, Burst: 2, Priority: 3 Time slice: 2
+[ENQUEUED] PID: 3, Burst: 7, Priority: 6
+[FINISHED] PID: 2
+[RUN]      PID: 3, Burst: 7, Priority: 6 Time slice: 2
+[REQUEUED] PID: 3, Burst: 5, Priority: 6
+[RUN]      PID: 3, Burst: 5, Priority: 6 Time slice: 2
+[REQUEUED] PID: 3, Burst: 3, Priority: 6
+[RUN]      PID: 3, Burst: 3, Priority: 6 Time slice: 2
+[ENQUEUED] PID: 4, Burst: 3, Priority: 2
+[REQUEUED] PID: 3, Burst: 1, Priority: 6
+[RUN]      PID: 4, Burst: 3, Priority: 2 Time slice: 2
+[REQUEUED] PID: 4, Burst: 1, Priority: 2
+[RUN]      PID: 3, Burst: 1, Priority: 6 Time slice: 1
+[ENQUEUED] PID: 5, Burst: 12, Priority: 4
+[FINISHED] PID: 3
+[RUN]      PID: 4, Burst: 1, Priority: 2 Time slice: 1
+[FINISHED] PID: 4
+[RUN]      PID: 5, Burst: 12, Priority: 4 Time slice: 2
+[REQUEUED] PID: 5, Burst: 10, Priority: 4
+[RUN]      PID: 5, Burst: 10, Priority: 4 Time slice: 2
+[REQUEUED] PID: 5, Burst: 8, Priority: 4
+[RUN]      PID: 5, Burst: 8, Priority: 4 Time slice: 2
+[REQUEUED] PID: 5, Burst: 6, Priority: 4
+[RUN]      PID: 5, Burst: 6, Priority: 4 Time slice: 2
+[ENQUEUED] PID: 6, Burst: 5, Priority: 7
+[REQUEUED] PID: 5, Burst: 4, Priority: 4
+[RUN]      PID: 6, Burst: 5, Priority: 7 Time slice: 2
+[REQUEUED] PID: 6, Burst: 3, Priority: 7
+[RUN]      PID: 5, Burst: 4, Priority: 4 Time slice: 2
+[ENQUEUED] PID: 7, Burst: 8, Priority: 1
+[REQUEUED] PID: 5, Burst: 2, Priority: 4
+[RUN]      PID: 6, Burst: 3, Priority: 7 Time slice: 2
+[ENQUEUED] PID: 8, Burst: 6, Priority: 5
+[REQUEUED] PID: 6, Burst: 1, Priority: 7
+[RUN]      PID: 7, Burst: 8, Priority: 1 Time slice: 2
+[REQUEUED] PID: 7, Burst: 6, Priority: 1
+[RUN]      PID: 5, Burst: 2, Priority: 4 Time slice: 2
+[FINISHED] PID: 5
+[RUN]      PID: 8, Burst: 6, Priority: 5 Time slice: 2
+[ENQUEUED] PID: 9, Burst: 2, Priority: 8
+[REQUEUED] PID: 8, Burst: 4, Priority: 5
+[RUN]      PID: 6, Burst: 1, Priority: 7 Time slice: 1
+[FINISHED] PID: 6
+[RUN]      PID: 7, Burst: 6, Priority: 1 Time slice: 2
+[REQUEUED] PID: 7, Burst: 4, Priority: 1
+[RUN]      PID: 9, Burst: 2, Priority: 8 Time slice: 2
+[FINISHED] PID: 9
+[RUN]      PID: 8, Burst: 4, Priority: 5 Time slice: 2
+[ENQUEUED] PID: 10, Burst: 10, Priority: 3
+[REQUEUED] PID: 8, Burst: 2, Priority: 5
+[RUN]      PID: 7, Burst: 4, Priority: 1 Time slice: 2
+[REQUEUED] PID: 7, Burst: 2, Priority: 1
+[RUN]      PID: 10, Burst: 10, Priority: 3 Time slice: 2
+[REQUEUED] PID: 10, Burst: 8, Priority: 3
+[RUN]      PID: 8, Burst: 2, Priority: 5 Time slice: 2
+[FINISHED] PID: 8
+[RUN]      PID: 7, Burst: 2, Priority: 1 Time slice: 2
+[FINISHED] PID: 7
+[RUN]      PID: 10, Burst: 8, Priority: 3 Time slice: 2
+[REQUEUED] PID: 10, Burst: 6, Priority: 3
+[RUN]      PID: 10, Burst: 6, Priority: 3 Time slice: 2
+[REQUEUED] PID: 10, Burst: 4, Priority: 3
+[RUN]      PID: 10, Burst: 4, Priority: 3 Time slice: 2
+[REQUEUED] PID: 10, Burst: 2, Priority: 3
+[RUN]      PID: 10, Burst: 2, Priority: 3 Time slice: 2
+[FINISHED] PID: 10 |
 
 ---
 
@@ -326,7 +488,7 @@ cd dummy-client
 
 **Paso 3:** Para detener el cliente automático presionar `Ctrl+C`.
 
-**Paso 4:** Para detener el servidor presionar `Ctrl+C`. El servidor mostrará el resumen final.
+**Paso 4:** Para detener el servidor teclar `m` y posteriormente `enter`. El servidor mostrará el resumen final.
 
 ### Formato del archivo de entrada (modo manual)
 
