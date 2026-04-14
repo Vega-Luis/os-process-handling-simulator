@@ -49,7 +49,6 @@ void* client_handler(void *arg) {
             fprintf(stderr, "Error al aceptar cliente\n");
             continue;;
         }
-        printf("Cliente conectado: %d\n", client);
         ClientArgs* client_args = malloc(sizeof(ClientArgs));
         client_args->client = client;
         client_args->ready_queue = ready_queue;
