@@ -1,5 +1,5 @@
 # Proyecto 1 - Simulación de Planificación de Procesos
-### Principios de Sistemas Operativos | Escuela de Computación | I Semestre 2026
+### Principios de Sistemas Operativos | Escuela de Ingeniería en Computación | I Semestre 2026
 ### Instituto Tecnológico de Costa Rica
 ### Profesora: Erika Marín Schumann
 
@@ -75,15 +75,43 @@ La comunicación utiliza un protocolo binario propio implementado con un sistema
 
 ### El Servidor
 
+Esta aplicación funciona como el simulador del sistema operativo.
+
+**System Timer**
+Se utiliza el hilo `timer_thread`  para simular el "system timer".
+La unidad de tiempo para la simulación es de un segundo.
+El valor del timer se almacena en una variable global que es actualizada cada segundo por este hilo haciendo uso de `pthread_mutex` para evitar inconsistencias.
+
+**Manejo de los clientes**
+Se utiliza el hilo `client_handler` que permite recibir varios clientes de forma concurrente.
+La función `accept(args...)` evita el bussy wating al dormir el hilo hasta que un nuevo cliente se conecte.
+Para cada cliente nuevo se asigna un hilo `job_scheduler` para manejar las tareas recibidas.
+
+**Cola del ready**
+La cola del ready esta implementada por medio de dos estructuras de datos que se adecuan a soluciones de inserción óptimas de acuerdo a los a los algoritmos de administración de cpu.
+Estas estructuras son utilizadas mediante una interfaz que permite la inicializacón correcta dependiendo del algoritmo elegido por el usuario.`
+
+Los algoritmos HPF y SJF utilizan una cola de proridades o heap implementada sobre un arreglo y ordenada por prioridad o burst dependiendo del algoritmo elegido.
+Los algoritmos FIFO y RR utilizan una cola circular implementada sobre un arreglo. El cpu scheduler mediante una operación matemática decide el time slice y si la tarea debe ser reencolada según el algoritmo correspondiente.
+
+Esta seleción de algoritmos permite encolar y desencolar con complejidad **O(log n)** en **HPF** y **SJF**, y **O(1)** en **FIFO** y **RR**.
+
+Ambas implementaciones hacen uso de `pthread_mutex_t` para asegurar que un único hilo puede modificar la cola a la vez y `pthread_cond_t` para evitar el bussy wating cuando la cola esté vacia.
 
 **JOB Scheduler:**
-> _Describir cómo recibe los procesos, asigna PIDs y construye el PCB._
+La funcion `recv(args...)` evita el bussy waiting mientras espera tareas desde el socket cliente.
+Una vez es recibido un request del cliente, se deserializa la información en un struct que contiene el burst y la prioridad de la tarea. Se crea un pcb para dicha tarea y genera un pid mediante la función `generate_pid()` que haciendo uso de `pthread_mutex` garantiza que no se repitan pids.
+
+Posteriormente se realiza la operación de encolar y se captura el tiempo de llegada. 
+
+Por último el pid es serializado y enviado al cliente.
+
 
 **CPU Scheduler:**
-> _Describir cómo selecciona y ejecuta procesos según el algoritmo configurado._
+Desencola el **pcb** de la próxima tarea a ejecutar, acción que siempre será O(1) *O(log n) al tomar en cuenta el heapify en SJF y HPF* ya que las estructuras mantienen ordenadas las tareas por la prioridad respectiva para cada algoritmo.
+Posteriormente calcula el *time slice* que será del tamaño elegido por el usuario en el caso del *RR* y del tamaño del burst para los otros algoritmos, simula la ejecución con `sleep(time_slice)`, calcula el nuevo burst, reencola al ready si es necesario y captura el tiempo de finalización para esa tarea si fue completada.
 
-**Algoritmos implementados:**
-> _Describir FIFO, SJF, HPF y Round Robin._
+En el caso del **RR** si el time slice es mayor al burst, el tiempo de ejecución será el burst.
 
 ---
 
@@ -100,14 +128,18 @@ La comunicación utiliza un protocolo binario propio implementado con un sistema
 | 7 | Prioridad aleatoria entre 1 y 10 | 100% | |
 | 8 | Sleep aleatorio 3-8s entre procesos (manual) | 100% | |
 | 9 | Recepción y despliegue del PID asignado | 100% | |
-| 10 | JOB Scheduler en el servidor | % | |
-| 11 | CPU Scheduler - FIFO | % | |
-| 12 | CPU Scheduler - SJF | % | |
-| 13 | CPU Scheduler - HPF | % | |
-| 14 | CPU Scheduler - Round Robin | % | |
-| 15 | Cola de procesos con mutex | % | |
-| 16 | Resumen final (TAT, WT, promedios) | % | |
-| 17 | Comando para consultar cola en ejecución | % | |
+| 10 | JOB Scheduler en el servidor | 100% | |
+| 11 | CPU Scheduler - FIFO | 100% | |
+| 12 | CPU Scheduler - SJF | 100% | |
+| 13 | CPU Scheduler - HPF | 100% | |
+| 14 | CPU Scheduler - Round Robin | 100% | |
+| 15 | Cola de procesos con mutex | 100% | |
+| 16 | Resumen final (TAT, WT, promedios) | 100% | |
+| 17 | Comando para consultar cola en ejecución | 95% | En lugar de un comando para consultar se implementa un log que permite ver en tiempo real el estado de la cola de ejecucion |
+
+*Aclaraciones* La simulacion asigna pid segun orden de llegada.
+Los logs permiten ver de manera detallada el momento de llegada de cada tarea y el orden ejecucion.
+La tabla de metricas es indexada por pid, por lo que el orden de impresion es por pid, para analizar a detalle prestar especial atencion a los tiempos de llegada y los tiempos de finalizacion de cada tarea.
 
 ---
 
@@ -179,24 +211,100 @@ Organización de proyectos en C: Se aprendió a estructurar un proyecto en C con
 ---
 
 ### Prueba 4 — Algoritmo FIFO
-> _[Le toca al compañero del servidor]_
 
 | Campo | Detalle |
 |---|---|
-| **Descripción** | |
-| **Resultado esperado** | |
-| **Resultado obtenido** | |
+| **Descripción** | Verificar comportamiento FIFO. Salida mismo orden que archivo |
+| **Archivo de entrada** | ./test/fifo.txt
+| **Resultado esperado** |  `8 3 / 7 2 / 5 9 / 3 1/ 12 7`|
+| **Resultado obtenido** | `8 3 / 7 2 / 5 9 / 3 1/ 12 7`|
+
+---
+### Prueba 5 — Algoritmo SJF
+
+| Campo | Detalle |
+|---|---|
+| **Descripción** | Verificar comportamiento SJF. CPU ejecuta los el mas peque;o de los disponibles|
+| **Archivo de entrada** | ./test/sjf.txt
+| **Log de ejecucion** |
+[ENQUEUED] PID: 1, Burst: 20, Priority: 5
+[RUN]      PID: 1, Burst: 20, Priority: 5 Time slice: 20
+[ENQUEUED] PID: 2, Burst: 10, Priority: 3
+[ENQUEUED] PID: 3, Burst: 2, Priority: 9
+[ENQUEUED] PID: 4, Burst: 5, Priority: 4
+[FINISHED] PID: 1
+[RUN]      PID: 3, Burst: 2, Priority: 9 Time slice: 2
+[FINISHED] PID: 3
+[RUN]      PID: 4, Burst: 5, Priority: 4 Time slice: 5
+[ENQUEUED] PID: 5, Burst: 1, Priority: 8
+[FINISHED] PID: 4
+[RUN]      PID: 5, Burst: 1, Priority: 8 Time slice: 1
+[FINISHED] PID: 5
+[RUN]      PID: 2, Burst: 10, Priority: 3 Time slice: 10
+[ENQUEUED] PID: 6, Burst: 20, Priority: 2
+[ENQUEUED] PID: 7, Burst: 1, Priority: 7
+[FINISHED] PID: 2
+[RUN]      PID: 7, Burst: 1, Priority: 7 Time slice: 1
+[FINISHED] PID: 7
+[RUN]      PID: 6, Burst: 20, Priority: 2 Time slice: 20
+[ENQUEUED] PID: 8, Burst: 12, Priority: 6
+[ENQUEUED] PID: 9, Burst: 4, Priority: 1
+[ENQUEUED] PID: 10, Burst: 15, Priority: 5
+[FINISHED] PID: 6
+[RUN]      PID: 9, Burst: 4, Priority: 1 Time slice: 4
+[FINISHED] PID: 9
+[RUN]      PID: 8, Burst: 12, Priority: 6 Time slice: 12
+[FINISHED] PID: 8
+[RUN]      PID: 10, Burst: 15, Priority: 5 Time slice: 15
+[FINISHED] PID: 10|
+| **Resultado esperado** |  `1 20 5 / 3 2 9 / 4 5 4 / 5 1 8 / 2 10 3 / 7 1 7 / 6 20 2 / 9 4 1 / 8 12 6 / 10 15 5`|
+| **Resultado obtenido** | `1 20 5 / 3 2 9 / 4 5 4 / 5 1 8 / 2 10 3 / 7 1 7 / 6 20 2 / 9 4 1 / 8 12 6 / 10 15 5`|
+
+---
+### Prueba 6 — HPF
+
+| Campo | Detalle |
+|---|---|
+| **Descripción** | Verificar HPF. Toma el que tiene mayor prioridad de los disponibles |
+| **Log de ejecucion** |
+[ENQUEUED] PID: 1, Burst: 20, Priority: 8
+[RUN]      PID: 1, Burst: 20, Priority: 8 Time slice: 20
+[ENQUEUED] PID: 2, Burst: 15, Priority: 7
+[ENQUEUED] PID: 3, Burst: 18, Priority: 6
+[ENQUEUED] PID: 4, Burst: 17, Priority: 5
+[FINISHED] PID: 1
+[RUN]      PID: 4, Burst: 17, Priority: 5 Time slice: 17
+[ENQUEUED] PID: 5, Burst: 16, Priority: 4
+[ENQUEUED] PID: 6, Burst: 5, Priority: 3
+[FINISHED] PID: 4
+[RUN]      PID: 6, Burst: 5, Priority: 3 Time slice: 5
+[ENQUEUED] PID: 7, Burst: 4, Priority: 2
+[FINISHED] PID: 6
+[RUN]      PID: 7, Burst: 4, Priority: 2 Time slice: 4
+[ENQUEUED] PID: 8, Burst: 3, Priority: 1
+[FINISHED] PID: 7
+[RUN]      PID: 8, Burst: 3, Priority: 1 Time slice: 3
+[FINISHED] PID: 8
+[RUN]      PID: 5, Burst: 16, Priority: 4 Time slice: 16
+[ENQUEUED] PID: 9, Burst: 2, Priority: 2
+[ENQUEUED] PID: 10, Burst: 1, Priority: 1
+[FINISHED] PID: 5
+[RUN]      PID: 10, Burst: 1, Priority: 1 Time slice: 1
+[FINISHED] PID: 10
+[RUN]      PID: 9, Burst: 2, Priority: 2 Time slice: 2
+[FINISHED] PID: 9
+[RUN]      PID: 3, Burst: 18, Priority: 6 Time slice: 18
+[FINISHED] PID: 3
+[RUN]      PID: 2, Burst: 15, Priority: 7 Time slice: 15
+[FINISHED] PID: 2|
+| **Resultado esperado** | `1 20 8 / 4 17 5 / 6 5 3 / 7 4 2 / 8 3 1 / 5 16 4 / 10 1 1 / 9 2 2 / 3 18 6 / 2 15 7` |
+| **Resultado obtenido** | `1 20 8 / 4 17 5 / 6 5 3 / 7 4 2 / 8 3 1 / 5 16 4 / 10 1 1 / 9 2 2 / 3 18 6 / 2 15 7`|
 
 ---
 
 ### Prueba 5 — Round Robin con quantum
-> _[Le toca al compañero del servidor]_
 
-| Campo | Detalle |
-|---|---|
-| **Descripción** | |
-| **Resultado esperado** | |
-| **Resultado obtenido** | |
+
 
 ---
 
@@ -298,7 +406,7 @@ cd dummy-client
 
 **Paso 3:** Para detener el cliente automático presionar `Ctrl+C`.
 
-**Paso 4:** Para detener el servidor presionar `Ctrl+C`. El servidor mostrará el resumen final.
+**Paso 4:** Para detener el servidor teclar `m` y posteriormente `enter`. El servidor mostrará el resumen final.
 
 ### Formato del archivo de entrada (modo manual)
 
@@ -344,3 +452,6 @@ GeeksforGeeks — POSIX Threads in OS: https://www.geeksforgeeks.org/operating-s
 Medium — POSIX Threads, The Simplest Way to Understand Real Multithreading in C: https://medium.com/@techdhaba.training/posix-threads-pthreads-the-simplest-way-to-understand-real-multithreading-in-c-c2f591ab7a03
 
 JavaProgramTo — Java Platform Threads Explained: https://www.javaprogramto.com/2025/07/java-platform-threads-limit-performance-cost.html
+
+C Program to Implement Circular Queue: https://www.geeksforgeeks.org/c/c-program-to-implement-circular-queue/
+Heap in C: https://www.geeksforgeeks.org/c/heap-in-c/

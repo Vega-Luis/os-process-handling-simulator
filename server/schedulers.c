@@ -25,7 +25,6 @@ void* job_scheduler(void* arg) {
 
         int bytes = recv(client_fd, buffer_data, REQUEST_SIZE, 0);
         if (bytes <= 0) {
-            printf("Cliente desconectado\n");
             break;
         }
         Buffer buffer;
@@ -56,7 +55,6 @@ void* job_scheduler(void* arg) {
         serialize_response(&res_buf, &res);
         send(client_fd, res_buffer, res_buf.offset, 0);
     }
-    printf("Cerrando conexión con el cliente\n");
     close(client_fd);
     free(client_args);
     return NULL;

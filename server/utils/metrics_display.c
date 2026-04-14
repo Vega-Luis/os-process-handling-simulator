@@ -27,7 +27,7 @@ void print_metrics() {
     int total_wt = 0;
     int printed_jobs = 0;
 
-    for (int i = 0; i < job_count; i++) {
+    for (int i = 0; i <= job_count; i++) {
         JobMetric *job = &job_metrics[i];
 
         if (!job->finished) continue;
