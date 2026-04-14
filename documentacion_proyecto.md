@@ -30,7 +30,13 @@
 
 El presente documento describe el desarrollo del primer proyecto del curso de Sistemas Operativos, consistente en la implementación de un simulador de planificación de procesos de CPU bajo una arquitectura cliente-servidor.
 
-El simulador fue desarrollado en el lenguaje C para Linux, haciendo uso de la librería PThreads para el manejo de hilos y sockets TCP para la comunicación entre procesos. El sistema permite que un cliente genere procesos con características definidas (tiempo de burst y prioridad) y los envíe a un servidor que los administra y ejecuta según diferentes algoritmos de planificación: First In First Out (FIFO), Shortest Job First (SJF), Highest Priority First (HPF) y Round Robin (RR).
+El simulador fue desarrollado en el lenguaje C para Linux, haciendo uso de la librería PThreads para el manejo de hilos y sockets TCP para la comunicación entre procesos.
+
+El sistema permite que un cliente genere procesos con características definidas (tiempo de burst y prioridad) y los envíe a un servidor que los administra y ejecuta según diferentes algoritmos de planificación:
+- First In First Out (FIFO)
+- Shortest Job First (SJF)
+- Highest Priority First (HPF)
+- Round Robin (RR).
 
 El cliente cuenta con dos modalidades de operación. En el modo manual, los procesos se leen desde un archivo de texto y se envían al servidor con pausas aleatorias entre cada uno. En el modo automático, los procesos se generan de forma aleatoria de manera continua hasta que el usuario decide detener la ejecución. 
 
@@ -46,7 +52,9 @@ Este proyecto permitió poner en práctica conceptos fundamentales de los sistem
 
 ![alt text](arquitectura.png)
 
-El sistema está compuesto por dos programas independientes que se comunican mediante sockets TCP: el cliente y el servidor.
+El sistema está compuesto por dos programas independientes que se comunican mediante sockets TCP:
+- Ciente
+- Servidor.
 
 El cliente es el encargado de generar los procesos. Cada proceso se representa como un hilo independiente que establece su propia conexión con el servidor, envía un mensaje con el burst y la prioridad del proceso, espera recibir el PID asignado y luego termina cerrando la conexión. El cliente opera en dos modos: manual, donde lee los procesos desde un archivo de texto con pausas aleatorias entre cada envío, y automático, donde genera procesos con valores aleatorios de forma continua hasta que el usuario lo detiene.
 
@@ -61,35 +69,33 @@ La cola de procesos es compartida entre el JOB Scheduler y el CPU Scheduler, por
 El cliente fue desarrollado en C utilizando la librería PThreads para el manejo de hilos y sockets TCP para la comunicación con el servidor. Su función principal es generar procesos con un burst y una prioridad determinados, y enviarlos al servidor para su planificación.
 Al iniciar, el cliente recibe por línea de comandos el modo de operación y el rango de burst permitido. Dependiendo del modo seleccionado, el cliente opera de dos formas distintas.
 
-**Modo Manual**
+#### Modo Manual
 En este modo el cliente recibe como parámetro el nombre de un archivo de texto que contiene la información de los procesos a enviar. Cada línea del archivo contiene dos valores: el burst y la prioridad del proceso. El cliente lee el archivo línea por línea y por cada proceso válido crea un hilo independiente que se encarga de conectarse al servidor y enviar la información. Si el burst de un proceso está fuera del rango establecido por el usuario, el proceso es ignorado. Entre la lectura de cada proceso se aplica un sleep de duración aleatoria entre 3 y 8 segundos, simulando la llegada gradual de procesos al sistema.
 
-**Modo Automático**
+#### Modo Automático
 En este modo el cliente genera procesos de forma continua con valores de burst y prioridad aleatorios. El burst se genera dentro del rango definido por el usuario y la prioridad se genera aleatoriamente entre 1 y 10. Por cada proceso generado se crea un hilo independiente que lo envía al servidor. El cliente continúa generando procesos hasta que el usuario presiona Ctrl+C, momento en el que el programa captura la señal SIGINT y termina limpiamente.
 
-**Hilo por proceso**
+#### Hilo por proceso
 En ambos modos, cada proceso es manejado por un hilo independiente creado con *pthread_create*. Este hilo establece su propia conexión al servidor mediante un socket TCP, serializa los datos del proceso usando el protocolo de buffer implementado, envía el mensaje al servidor, espera recibir el PID asignado, lo muestra en pantalla y finaliza cerrando la conexión. El hilo se configura con *pthread_detach* para que libere sus recursos automáticamente al terminar.
 
-**Protocolo de comunicación**
+#### Protocolo de comunicación
 La comunicación utiliza un protocolo binario propio implementado con un sistema de buffer que garantiza el orden correcto de los bytes en la red. El mensaje enviado al servidor contiene el burst como un entero sin signo de 32 bits y la prioridad como un entero sin signo de 8 bits. La respuesta del servidor contiene el PID asignado como un entero sin signo de 32 bits.
 
 ### El Servidor
 
-Esta aplicación funciona como el simulador del sistema operativo.
-
-**System Timer**
+#### System Timer
 Se utiliza el hilo `timer_thread`  para simular el "system timer".
 La unidad de tiempo para la simulación es de un segundo.
 El valor del timer se almacena en una variable global que es actualizada cada segundo por este hilo haciendo uso de `pthread_mutex` para evitar inconsistencias.
 
-**Manejo de los clientes**
+#### Manejo de los clientes
 Se utiliza el hilo `client_handler` que permite recibir varios clientes de forma concurrente.
 La función `accept(args...)` evita el bussy wating al dormir el hilo hasta que un nuevo cliente se conecte.
 Para cada cliente nuevo se asigna un hilo `job_scheduler` para manejar las tareas recibidas.
 
-**Cola del ready**
+#### Cola del ready
 La cola del ready esta implementada por medio de dos estructuras de datos que se adecuan a soluciones de inserción óptimas de acuerdo a los a los algoritmos de administración de cpu.
-Estas estructuras son utilizadas mediante una interfaz que permite la inicializacón correcta dependiendo del algoritmo elegido por el usuario.`
+Estas estructuras son utilizadas mediante una interfaz que permite la inicializacón correcta dependiendo del algoritmo elegido por el usuario.
 
 Los algoritmos HPF y SJF utilizan una cola de proridades o heap implementada sobre un arreglo y ordenada por prioridad o burst dependiendo del algoritmo elegido.
 Los algoritmos FIFO y RR utilizan una cola circular implementada sobre un arreglo. El cpu scheduler mediante una operación matemática decide el time slice y si la tarea debe ser reencolada según el algoritmo correspondiente.
@@ -98,7 +104,7 @@ Esta seleción de algoritmos permite encolar y desencolar con complejidad **O(lo
 
 Ambas implementaciones hacen uso de `pthread_mutex_t` para asegurar que un único hilo puede modificar la cola a la vez y `pthread_cond_t` para evitar el bussy wating cuando la cola esté vacia.
 
-**JOB Scheduler:**
+#### JOB Scheduler
 La funcion `recv(args...)` evita el bussy waiting mientras espera tareas desde el socket cliente.
 Una vez es recibido un request del cliente, se deserializa la información en un struct que contiene el burst y la prioridad de la tarea. Se crea un pcb para dicha tarea y genera un pid mediante la función `generate_pid()` que haciendo uso de `pthread_mutex` garantiza que no se repitan pids.
 
@@ -107,7 +113,7 @@ Posteriormente se realiza la operación de encolar y se captura el tiempo de lle
 Por último el pid es serializado y enviado al cliente.
 
 
-**CPU Scheduler:**
+#### CPU Scheduler
 Desencola el **pcb** de la próxima tarea a ejecutar, acción que siempre será O(1) *O(log n) al tomar en cuenta el heapify en SJF y HPF* ya que las estructuras mantienen ordenadas las tareas por la prioridad respectiva para cada algoritmo.
 Posteriormente calcula el *time slice* que será del tamaño elegido por el usuario en el caso del *RR* y del tamaño del burst para los otros algoritmos, simula la ejecución con `sleep(time_slice)`, calcula el nuevo burst, reencola al ready si es necesario y captura el tiempo de finalización para esa tarea si fue completada.
 
@@ -137,7 +143,8 @@ En el caso del **RR** si el time slice es mayor al burst, el tiempo de ejecució
 | 16 | Resumen final (TAT, WT, promedios) | 100% | |
 | 17 | Comando para consultar cola en ejecución | 95% | En lugar de un comando para consultar se implementa un log que permite ver en tiempo real el estado de la cola de ejecucion |
 
-*Aclaraciones* La simulacion asigna pid segun orden de llegada.
+### Detalles de implementacion
+La simulacion asigna pid segun orden de llegada.
 Los logs permiten ver de manera detallada el momento de llegada de cada tarea y el orden ejecucion.
 La tabla de metricas es indexada por pid, por lo que el orden de impresion es por pid, para analizar a detalle prestar especial atencion a los tiempos de llegada y los tiempos de finalizacion de cada tarea.
 
@@ -212,21 +219,41 @@ Organización de proyectos en C: Se aprendió a estructurar un proyecto en C con
 
 ### Prueba 4 — Algoritmo FIFO
 
-| Campo | Detalle |
-|---|---|
-| **Descripción** | Verificar comportamiento FIFO. Salida mismo orden que archivo |
-| **Archivo de entrada** | ./test/fifo.txt
-| **Resultado esperado** |  `8 3 / 7 2 / 5 9 / 3 1/ 12 7`|
-| **Resultado obtenido** | `8 3 / 7 2 / 5 9 / 3 1/ 12 7`|
+
+
+- **Descripción:** Verificar comportamiento FIFO. Los los deben evidenciar que las tareas son ejecutas en el orden que ingresan la cola del ready.
+- **Archivo de entrada:** `./test/fifo.txt`
+- **comando en el cliente:** `./client manual ../test/fifo.txt 1 20`
+- **Resultado:** Los logs evidencian que las tareas son ejecutadas en el mismo orden que ingresaron a la cola del ready.
+- **Log de ejecucion:**
+```txt
+[ENQUEUED] PID: 1, Burst: 8, Priority: 3
+[RUN]      PID: 1, Burst: 8, Priority: 3 Time slice: 8
+[ENQUEUED] PID: 2, Burst: 7, Priority: 2
+[FINISHED] PID: 1
+[RUN]      PID: 2, Burst: 7, Priority: 2 Time slice: 7
+[ENQUEUED] PID: 3, Burst: 5, Priority: 9
+[FINISHED] PID: 2
+[RUN]      PID: 3, Burst: 5, Priority: 9 Time slice: 5
+[ENQUEUED] PID: 4, Burst: 3, Priority: 1
+[FINISHED] PID: 3
+[RUN]      PID: 4, Burst: 3, Priority: 1 Time slice: 3
+[FINISHED] PID: 4
+[ENQUEUED] PID: 5, Burst: 12, Priority: 7
+[RUN]      PID: 5, Burst: 12, Priority: 7 Time slice: 12
+[FINISHED] PID: 5
+```
+
 
 ---
 ### Prueba 5 — Algoritmo SJF
 
-| Campo | Detalle |
-|---|---|
-| **Descripción** | Verificar comportamiento SJF. CPU ejecuta los el mas peque;o de los disponibles|
-| **Archivo de entrada** | ./test/sjf.txt
-| **Log de ejecucion** |
+- **Descripción:** Verificar comportamiento SJF. El job scheduler debe ejecutar las tareas con el burst mas pequeño de entre las disponibles.
+- **Archivo de entrada:**  `./test/sjf.txt`
+- **Comando en el cliente:** `./client manual ../test/sjf.txt 1 20`
+- **Resultado:** Los logs evidencian que las tareas son ejecutadas priorizado el burst disponible más pequeño.
+- **Log de ejecución:**
+```txt
 [ENQUEUED] PID: 1, Burst: 20, Priority: 5
 [RUN]      PID: 1, Burst: 20, Priority: 5 Time slice: 20
 [ENQUEUED] PID: 2, Burst: 10, Priority: 3
@@ -256,17 +283,17 @@ Organización de proyectos en C: Se aprendió a estructurar un proyecto en C con
 [RUN]      PID: 8, Burst: 12, Priority: 6 Time slice: 12
 [FINISHED] PID: 8
 [RUN]      PID: 10, Burst: 15, Priority: 5 Time slice: 15
-[FINISHED] PID: 10|
-| **Resultado esperado** |  `1 20 5 / 3 2 9 / 4 5 4 / 5 1 8 / 2 10 3 / 7 1 7 / 6 20 2 / 9 4 1 / 8 12 6 / 10 15 5`|
-| **Resultado obtenido** | `1 20 5 / 3 2 9 / 4 5 4 / 5 1 8 / 2 10 3 / 7 1 7 / 6 20 2 / 9 4 1 / 8 12 6 / 10 15 5`|
+[FINISHED] PID: 10
+```
 
----
 ### Prueba 6 — HPF
 
-| Campo | Detalle |
-|---|---|
-| **Descripción** | Verificar HPF. Toma el que tiene mayor prioridad de los disponibles |
-| **Log de ejecucion** |
+- **Descripción** Verificar HPF. El job scheduler debe ejecutar las tareas con mayor prioridad de entre las disponibles
+- - **Archivo de entrada:**  `./test/hpf.txt`
+- **Comando en el cliente:** `./client manual ../test/hpf.txt 1 20`
+- **Resultado:** Los logs evidencian que las tareas son ejecutadas selecionando las que de mayor prioridad de entre las disponibles.
+- **Log de ejecucion:**
+```txt
 [ENQUEUED] PID: 1, Burst: 20, Priority: 8
 [RUN]      PID: 1, Burst: 20, Priority: 8 Time slice: 20
 [ENQUEUED] PID: 2, Burst: 15, Priority: 7
@@ -296,17 +323,99 @@ Organización de proyectos en C: Se aprendió a estructurar un proyecto en C con
 [RUN]      PID: 3, Burst: 18, Priority: 6 Time slice: 18
 [FINISHED] PID: 3
 [RUN]      PID: 2, Burst: 15, Priority: 7 Time slice: 15
-[FINISHED] PID: 2|
-| **Resultado esperado** | `1 20 8 / 4 17 5 / 6 5 3 / 7 4 2 / 8 3 1 / 5 16 4 / 10 1 1 / 9 2 2 / 3 18 6 / 2 15 7` |
-| **Resultado obtenido** | `1 20 8 / 4 17 5 / 6 5 3 / 7 4 2 / 8 3 1 / 5 16 4 / 10 1 1 / 9 2 2 / 3 18 6 / 2 15 7`|
-
----
+[FINISHED] PID: 2
+```
 
 ### Prueba 5 — Round Robin con quantum
 
+- **Descripción** Verificar RR. El job scheduler todas las tareas disponibles en fracciones del quantum selecionado.
+- - **Archivo de entrada:**  `./test/rr.txt`
+- **Comando en el cliente:** `./client manual ../test/rr.txt 1 20`
+- **Resultado:** Con un quantum selecionado de 2, se evidencia que el job scheduler ejecuta con el comportamiento correcto.
+- **Log de ejecucion:**
+```txt
+[ENQUEUED] PID: 1, Burst: 9, Priority: 5
+[RUN]      PID: 1, Burst: 9, Priority: 5 Time slice: 2
+[REQUEUED] PID: 1, Burst: 7, Priority: 5
+[RUN]      PID: 1, Burst: 7, Priority: 5 Time slice: 2
+[REQUEUED] PID: 1, Burst: 5, Priority: 5
+[RUN]      PID: 1, Burst: 5, Priority: 5 Time slice: 2
+[REQUEUED] PID: 1, Burst: 3, Priority: 5
+[RUN]      PID: 1, Burst: 3, Priority: 5 Time slice: 2
+[ENQUEUED] PID: 2, Burst: 4, Priority: 3
+[REQUEUED] PID: 1, Burst: 1, Priority: 5
+[RUN]      PID: 2, Burst: 4, Priority: 3 Time slice: 2
+[REQUEUED] PID: 2, Burst: 2, Priority: 3
+[RUN]      PID: 1, Burst: 1, Priority: 5 Time slice: 1
+[FINISHED] PID: 1
+[RUN]      PID: 2, Burst: 2, Priority: 3 Time slice: 2
+[ENQUEUED] PID: 3, Burst: 7, Priority: 6
+[FINISHED] PID: 2
+[RUN]      PID: 3, Burst: 7, Priority: 6 Time slice: 2
+[REQUEUED] PID: 3, Burst: 5, Priority: 6
+[RUN]      PID: 3, Burst: 5, Priority: 6 Time slice: 2
+[REQUEUED] PID: 3, Burst: 3, Priority: 6
+[RUN]      PID: 3, Burst: 3, Priority: 6 Time slice: 2
+[ENQUEUED] PID: 4, Burst: 3, Priority: 2
+[REQUEUED] PID: 3, Burst: 1, Priority: 6
+[RUN]      PID: 4, Burst: 3, Priority: 2 Time slice: 2
+[REQUEUED] PID: 4, Burst: 1, Priority: 2
+[RUN]      PID: 3, Burst: 1, Priority: 6 Time slice: 1
+[ENQUEUED] PID: 5, Burst: 12, Priority: 4
+[FINISHED] PID: 3
+[RUN]      PID: 4, Burst: 1, Priority: 2 Time slice: 1
+[FINISHED] PID: 4
+[RUN]      PID: 5, Burst: 12, Priority: 4 Time slice: 2
+[REQUEUED] PID: 5, Burst: 10, Priority: 4
+[RUN]      PID: 5, Burst: 10, Priority: 4 Time slice: 2
+[REQUEUED] PID: 5, Burst: 8, Priority: 4
+[RUN]      PID: 5, Burst: 8, Priority: 4 Time slice: 2
+[REQUEUED] PID: 5, Burst: 6, Priority: 4
+[RUN]      PID: 5, Burst: 6, Priority: 4 Time slice: 2
+[ENQUEUED] PID: 6, Burst: 5, Priority: 7
+[REQUEUED] PID: 5, Burst: 4, Priority: 4
+[RUN]      PID: 6, Burst: 5, Priority: 7 Time slice: 2
+[REQUEUED] PID: 6, Burst: 3, Priority: 7
+[RUN]      PID: 5, Burst: 4, Priority: 4 Time slice: 2
+[ENQUEUED] PID: 7, Burst: 8, Priority: 1
+[REQUEUED] PID: 5, Burst: 2, Priority: 4
+[RUN]      PID: 6, Burst: 3, Priority: 7 Time slice: 2
+[ENQUEUED] PID: 8, Burst: 6, Priority: 5
+[REQUEUED] PID: 6, Burst: 1, Priority: 7
+[RUN]      PID: 7, Burst: 8, Priority: 1 Time slice: 2
+[REQUEUED] PID: 7, Burst: 6, Priority: 1
+[RUN]      PID: 5, Burst: 2, Priority: 4 Time slice: 2
+[FINISHED] PID: 5
+[RUN]      PID: 8, Burst: 6, Priority: 5 Time slice: 2
+[ENQUEUED] PID: 9, Burst: 2, Priority: 8
+[REQUEUED] PID: 8, Burst: 4, Priority: 5
+[RUN]      PID: 6, Burst: 1, Priority: 7 Time slice: 1
+[FINISHED] PID: 6
+[RUN]      PID: 7, Burst: 6, Priority: 1 Time slice: 2
+[REQUEUED] PID: 7, Burst: 4, Priority: 1
+[RUN]      PID: 9, Burst: 2, Priority: 8 Time slice: 2
+[FINISHED] PID: 9
+[RUN]      PID: 8, Burst: 4, Priority: 5 Time slice: 2
+[ENQUEUED] PID: 10, Burst: 10, Priority: 3
+[REQUEUED] PID: 8, Burst: 2, Priority: 5
+[RUN]      PID: 7, Burst: 4, Priority: 1 Time slice: 2
+[REQUEUED] PID: 7, Burst: 2, Priority: 1
+[RUN]      PID: 10, Burst: 10, Priority: 3 Time slice: 2
+[REQUEUED] PID: 10, Burst: 8, Priority: 3
+[RUN]      PID: 8, Burst: 2, Priority: 5 Time slice: 2
+[FINISHED] PID: 8
+[RUN]      PID: 7, Burst: 2, Priority: 1 Time slice: 2
+[FINISHED] PID: 7
+[RUN]      PID: 10, Burst: 8, Priority: 3 Time slice: 2
+[REQUEUED] PID: 10, Burst: 6, Priority: 3
+[RUN]      PID: 10, Burst: 6, Priority: 3 Time slice: 2
+[REQUEUED] PID: 10, Burst: 4, Priority: 3
+[RUN]      PID: 10, Burst: 4, Priority: 3 Time slice: 2
+[REQUEUED] PID: 10, Burst: 2, Priority: 3
+[RUN]      PID: 10, Burst: 2, Priority: 3 Time slice: 2
+[FINISHED] PID: 10
+```
 
-
----
 
 ## Comparación Java Threads vs PThreads
 
@@ -383,6 +492,10 @@ El servidor pedirá seleccionar el algoritmo de scheduling:
 3. HPF (Highest Priority First)
 4. Round Robin (RR)
 ```
+En el caso del RR, posteriomente solicitará el quantum:
+```
+Ingrese el quantum para Round Robin:
+```
 
 **Paso 2:** En otra terminal, iniciar el cliente:
 
@@ -406,7 +519,7 @@ cd dummy-client
 
 **Paso 3:** Para detener el cliente automático presionar `Ctrl+C`.
 
-**Paso 4:** Para detener el servidor teclar `m` y posteriormente `enter`. El servidor mostrará el resumen final.
+**Paso 4:** Para detener el servidor teclar cualquier caracter y posteriormente `enter`. El servidor mostrará el resumen final.
 
 ### Formato del archivo de entrada (modo manual)
 
