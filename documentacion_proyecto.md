@@ -452,3 +452,6 @@ GeeksforGeeks — POSIX Threads in OS: https://www.geeksforgeeks.org/operating-s
 Medium — POSIX Threads, The Simplest Way to Understand Real Multithreading in C: https://medium.com/@techdhaba.training/posix-threads-pthreads-the-simplest-way-to-understand-real-multithreading-in-c-c2f591ab7a03
 
 JavaProgramTo — Java Platform Threads Explained: https://www.javaprogramto.com/2025/07/java-platform-threads-limit-performance-cost.html
+
+C Program to Implement Circular Queue: https://www.geeksforgeeks.org/c/c-program-to-implement-circular-queue/
+Heap in C: https://www.geeksforgeeks.org/c/heap-in-c/
